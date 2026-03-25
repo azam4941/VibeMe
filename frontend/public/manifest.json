@@ -1,0 +1,25 @@
+{
+  "short_name": "RentMe",
+  "name": "RentMe - Share Your Time",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "https://api.dicebear.com/7.x/avataaars/png?seed=RentMe&backgroundColor=7c3aed",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://api.dicebear.com/7.x/avataaars/png?seed=RentMe&backgroundColor=7c3aed",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#7c3aed",
+  "background_color": "#0a0a0b"
+}

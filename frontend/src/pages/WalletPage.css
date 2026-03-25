@@ -1,0 +1,229 @@
+/* WalletPage.css — VibeMe */
+.wallet-page .wallet-header { padding-bottom: 20px; }
+.wh-top-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; position: relative; }
+.wh-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: #fff; flex: 1; }
+.wh-history { font-size: 14px; color: var(--purple-mid); font-weight: 600; cursor: pointer; }
+
+.wallet-card {
+  background: var(--navy2); border-radius: 18px; padding: 18px; border: 1px solid var(--navy4);
+}
+.wc-label { font-size: 14px; color: #999; margin-bottom: 4px; }
+.wc-balance { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+.wc-frozen { font-size: 13px; color: var(--amber); margin-top: 6px; }
+.wc-btns { display: flex; gap: 8px; margin-top: 14px; }
+.wcb-add {
+  flex: 1; background: var(--purple-light); border-radius: 10px; padding: 12px;
+  text-align: center; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.wcb-withdraw {
+  flex: 1; background: var(--navy4); border-radius: 10px; padding: 12px;
+  text-align: center; color: var(--purple-mid); font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.quick-add-row { display: flex; gap: 6px; margin-top: 10px; }
+.qa {
+  flex: 1; background: var(--navy4); border-radius: 8px; padding: 10px;
+  text-align: center; font-size: 13px; color: var(--purple-mid); font-weight: 700; cursor: pointer;
+}
+
+.wallet-body { padding: 16px 18px 80px; display: flex; flex-direction: column; gap: 10px; }
+
+.txn-list { overflow: hidden; }
+.txn {
+  display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.txn:last-child { border-bottom: none; }
+.txn-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+}
+.ti-green { background: var(--teal-pale); }
+.ti-red { background: var(--pink-pale); }
+.ti-amber { background: var(--amber-pale); }
+.ti-blue { background: var(--purple-pale); }
+
+.txn-meta { flex: 1; }
+.txn-title { font-size: 14px; font-weight: 600; color: var(--text1); }
+.txn-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.txn-amount { font-family: var(--font-display); font-size: 15px; font-weight: 800; }
+.txn-plus { color: var(--teal); }
+.txn-minus { color: var(--pink); }
+
+/* Payment Method Selection */
+.payment-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+.payment-sheet {
+  background: var(--navy2);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 24px 20px calc(24px + var(--safe-bottom));
+  animation: slideUp 0.3s ease;
+}
+.payment-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.payment-sheet-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+.payment-sheet-close {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+}
+.payment-amount-display {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 14px;
+  background: var(--navy3);
+  border-radius: 12px;
+}
+.payment-amount-label {
+  font-size: 13px;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+.payment-amount-value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+}
+.payment-methods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.payment-method-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--navy3);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.payment-method-item.selected {
+  border-color: var(--purple);
+  background: var(--purple-pale);
+}
+.payment-method-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.pm-paytm { background: #00B9F1; color: #fff; }
+.pm-phonepe { background: #5F259F; color: #fff; }
+.pm-card { background: var(--navy4); color: var(--purple-mid); }
+.pm-upi { background: #4CAF50; color: #fff; }
+
+.payment-method-info { flex: 1; }
+.payment-method-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text1);
+}
+.payment-method-desc {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+.payment-method-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--navy4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.payment-method-item.selected .payment-method-check {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+.payment-confirm-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  background: var(--btn-gradient);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+.payment-confirm-btn:hover {
+  box-shadow: var(--shadow-md);
+  filter: brightness(1.1);
+}
+.payment-confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Custom Amount Input */
+.custom-amount-section {
+  margin-bottom: 16px;
+}
+.custom-amount-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--navy3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+}
+.custom-amount-input-wrap:focus-within {
+  border-color: var(--purple-light);
+}
+.custom-amount-prefix {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--purple-mid);
+}
+.custom-amount-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+}
+.custom-amount-input::placeholder {
+  color: var(--text3);
+}

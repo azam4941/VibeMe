@@ -1,0 +1,63 @@
+/* SessionPage.css — VibeMe */
+.session-page {
+  min-height: 100vh;
+  background: var(--navy);
+  padding-top: calc(16px + var(--safe-top, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sess-header {
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.sess-back { color: var(--purple-mid); font-size: 12px; cursor: pointer; }
+.sess-title { font-family: var(--font-display); font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+.sess-live { background: var(--red); color: #fff; font-size: 8px; font-weight: 700; padding: 3px 10px; border-radius: 6px; letter-spacing: 1px; }
+
+.sess-partner { display: flex; align-items: center; gap: 10px; padding: 12px 20px; width: 100%; }
+.sp-info { flex: 1; }
+.sp-name { font-family: var(--font-display); font-size: 14px; font-weight: 800; color: #fff; }
+.sp-vibe { font-size: 9px; color: #666; }
+.sp-rating { font-size: 10px; color: var(--amber); }
+
+.timer-area { display: flex; flex-direction: column; align-items: center; padding: 20px 0 16px; }
+.timer-ring-outer { position: relative; width: 160px; height: 160px; }
+.timer-ring-svg { position: absolute; top: 0; left: 0; width: 160px; height: 160px; }
+.timer-inner {
+  position: absolute; inset: 16px; border-radius: 50%; background: var(--navy2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.timer-num { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+.timer-label { font-size: 9px; color: #555; letter-spacing: 1px; margin-top: 2px; }
+.timer-pulse { font-size: 9px; color: var(--purple-mid); margin-top: 20px; letter-spacing: 2px; font-weight: 600; }
+
+.cost-cards { display: flex; gap: 10px; padding: 0 20px; width: 100%; }
+.cost-card {
+  flex: 1; background: var(--navy2); border-radius: 14px; padding: 12px; text-align: center; border: 1px solid var(--navy4);
+}
+.cc-label { font-size: 8px; color: #555; letter-spacing: 0.5px; margin-bottom: 4px; }
+.cc-val { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: #fff; }
+.cc-sub { font-size: 8px; color: #444; margin-top: 2px; }
+
+.session-actions { display: flex; gap: 10px; padding: 16px 20px; width: 100%; }
+.sa-mute, .sa-extend {
+  flex: 1; background: var(--navy3); border-radius: 12px; padding: 12px; text-align: center;
+  color: #fff; font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
+}
+.sa-end {
+  flex: 2; background: var(--red); border-radius: 12px; padding: 12px; text-align: center;
+  color: #fff; font-size: 12px; font-weight: 700; font-family: var(--font-display); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.session-notes { padding: 0 20px; width: 100%; }
+.sn-card { background: var(--navy2); border-radius: 12px; padding: 10px 14px; border: 1px solid var(--navy4); }
+.sn-title { font-size: 8px; color: #555; letter-spacing: 1px; font-weight: 600; margin-bottom: 6px; }
+.sn-rows { display: flex; flex-direction: column; gap: 4px; }
+.sn-row { display: flex; justify-content: space-between; font-size: 9px; }
+.sn-row .k { color: #666; }
+.sn-row .v { color: var(--purple-mid); font-weight: 600; }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "565797946033",
+    "project_id": "vibeme-bce95",
+    "storage_bucket": "vibeme-bce95.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565797946033:android:7974e7fa480c1136839890",
+        "android_client_info": {
+          "package_name": "com.azam.rentme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAz1EJVWENbrZoB_bYzyx8qvvWehuc0adw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

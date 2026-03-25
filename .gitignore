@@ -1,0 +1,57 @@
+# Dependency directories
+node_modules/
+dist/
+dist-ssr/
+build/
+.next/
+out/
+tmp/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.phone
+.env.tunnel
+.env.development
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Capacitor
+/android
+/ios
+capacitor.config.json.local
+node_modules/
+dist/
+www/
+
+# Secrets & Configs
+backend/src/config/firebase-service-account.json
+backend/test-twilio.js
+backend/test-sms.js
+backend/test-wallet.js
+backend/*.js
+!backend/seed.js
+!backend/seed-data.js

@@ -1,0 +1,21 @@
+/* Layout.css — VibeMe */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Override bottom-nav from index.css if needed */
+@media (min-width: 481px) {
+  .main-content {
+    max-width: 420px;
+  }
+}

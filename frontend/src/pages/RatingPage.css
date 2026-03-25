@@ -1,0 +1,67 @@
+/* RatingPage.css — VibeMe */
+.rating-page {
+  min-height: 100vh;
+  background: var(--bg);
+}
+.rating-top {
+  background: var(--navy);
+  padding: calc(20px + var(--safe-top, 0px)) 20px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rt-check {
+  width: 64px; height: 64px; border-radius: 50%; background: var(--teal);
+  display: flex; align-items: center; justify-content: center;
+}
+.rt-title { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: #fff; margin-top: 14px; text-align: center; }
+.rt-sub { font-size: 11px; color: #666; margin-top: 4px; text-align: center; }
+
+.rating-summary {
+  background: var(--navy2); border-radius: 14px; padding: 12px 16px;
+  display: flex; justify-content: space-around; margin: -14px 20px 0; border: 1px solid var(--navy4);
+  position: relative; z-index: 1;
+}
+.rs-item { text-align: center; }
+.rs-val { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--purple-mid); }
+.rs-label { font-size: 8px; color: #555; }
+
+.rating-body {
+  padding: 16px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.rb-section {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 14px;
+}
+.star-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.star {
+  font-size: 28px;
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.1s;
+}
+.star.lit { color: var(--amber); }
+
+.quick-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.qt {
+  padding: 7px 14px; border-radius: 20px; font-size: 10px; font-weight: 600;
+  border: 1.5px solid var(--border); color: var(--text2); cursor: pointer;
+  font-family: var(--font-body); transition: all 0.15s;
+}
+.qt.sel { background: var(--purple-pale); border-color: var(--purple); color: var(--purple); }
+
+.rating-textarea {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; font-size: 11px; font-family: var(--font-body);
+  color: var(--text1); height: 70px; resize: none; outline: none;
+}
+.rating-textarea:focus { border-color: var(--purple-light); }

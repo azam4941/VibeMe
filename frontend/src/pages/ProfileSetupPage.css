@@ -1,0 +1,210 @@
+/* ProfileSetupPage.css — VibeMe */
+.setup-page {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.setup-header {
+  background: var(--navy);
+  padding: calc(20px + var(--safe-top, 0px)) 20px 20px;
+}
+.setup-top-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.back-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.back-btn:active { background: rgba(255,255,255,0.1); }
+
+.setup-steps {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.step-dot {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  background: var(--navy3);
+  transition: background 0.3s;
+}
+.step-dot.done { background: var(--purple-mid); }
+.step-dot.active { background: #fff; }
+
+.setup-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+}
+.setup-sub {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.setup-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Avatar */
+.setup-avatar-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.setup-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--purple-pale);
+  border: 3px dashed var(--purple-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--purple);
+  cursor: pointer;
+}
+.setup-avatar-label {
+  font-size: 10px;
+  color: var(--purple);
+  font-weight: 600;
+}
+
+/* Inputs */
+.ig-input {
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--text1);
+  background: #fff;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ig-input:focus { border-color: var(--purple-light); }
+
+.ig-textarea {
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 12px;
+  font-family: var(--font-body);
+  color: var(--text2);
+  background: #fff;
+  height: 100px;
+  resize: none;
+  line-height: 1.6;
+  width: 100%;
+  outline: none;
+}
+.ig-textarea:focus { border-color: var(--purple-light); }
+
+/* Interest Chips */
+.interest-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.int-chip {
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  color: var(--text2);
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.15s;
+  font-family: var(--font-body);
+}
+.int-chip:hover { border-color: var(--purple-mid); }
+.int-chip.sel {
+  background: var(--purple);
+  color: #fff;
+  border-color: var(--purple);
+}
+
+/* Toggle row */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+}
+.tr-left .tr-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text1);
+}
+.tr-left .tr-sub {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+/* Price */
+.price-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+}
+.price-sym {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--purple);
+}
+.price-inp {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text1);
+  border: none;
+  outline: none;
+  background: transparent;
+}
+.price-unit {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.setup-btns-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

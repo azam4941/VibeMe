@@ -1,0 +1,181 @@
+/* UserDetailPage.css — VibeMe */
+.user-detail-container {
+  min-height: 100vh;
+  background: var(--bg);
+  padding-bottom: 80px;
+}
+
+.detail-hero {
+  background: var(--navy);
+  padding: calc(16px + var(--safe-top, 0px)) 18px 40px;
+  position: relative;
+}
+.hero-gradient {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+}
+.back-btn {
+  background: var(--navy2);
+  border: 1px solid var(--navy4);
+  color: var(--purple-mid);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-body);
+  margin-bottom: 20px;
+}
+.hero-content { display: flex; align-items: center; gap: 18px; position: relative; z-index: 1; }
+.hero-avatar-wrapper { position: relative; flex-shrink: 0; }
+.hero-avatar {
+  width: 80px; height: 80px; border-radius: 22px; object-fit: cover;
+  border: 3px solid var(--purple-light);
+}
+.hero-avatar.blurred { filter: blur(12px); }
+.hero-verified-badge {
+  position: absolute; bottom: -4px; right: -4px;
+  background: var(--teal); color: #fff; width: 28px; height: 28px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--navy);
+}
+.hero-name {
+  font-family: var(--font-display); font-size: 20px; font-weight: 800;
+  color: #fff; display: flex; align-items: center; gap: 6px;
+}
+.verified-icon-inline { margin-left: 4px; }
+.hero-stats { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.stat-pill {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--navy2); border: 1px solid var(--navy4);
+  padding: 4px 10px; border-radius: 8px;
+  font-size: 10px; color: #ccc;
+}
+.stat-pill .stat-icon { color: var(--purple-mid); }
+.stat-pill .stat-icon.star { color: #f97316; }
+
+.container { padding: 0 18px; }
+.mt-neg { margin-top: -20px; position: relative; z-index: 2; }
+
+.detail-grid { display: flex; flex-direction: column; gap: 12px; }
+.detail-main { display: flex; flex-direction: column; gap: 12px; }
+
+/* About section */
+.about-section {
+  padding: 18px;
+}
+.about-section h2 {
+  font-family: var(--font-display); font-size: 14px; font-weight: 800;
+  color: var(--text1); margin-bottom: 8px;
+}
+.bio-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.section-subtitle { font-size: 11px; font-weight: 700; color: var(--text1); text-transform: uppercase; letter-spacing: 0.5px; }
+.mt-24 { margin-top: 16px; }
+.mt-8 { margin-top: 8px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* Reviews */
+.reviews-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.empty-reviews {
+  text-align: center; padding: 30px;
+  color: var(--text3); font-size: 12px;
+}
+.review-card {
+  padding: 14px; background: #fff; border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.reviewer-info { display: flex; align-items: center; gap: 8px; }
+.reviewer-info .avatar-sm { width: 28px; height: 28px; border-radius: 8px; }
+.reviewer-name { font-size: 12px; font-weight: 600; }
+.stars { display: flex; gap: 1px; }
+.review-comment { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+/* Booking card */
+.booking-card {
+  padding: 18px;
+}
+.price-display {
+  display: flex; align-items: baseline; gap: 2px;
+  font-family: var(--font-display); margin-bottom: 16px;
+}
+.price-display .currency { font-size: 18px; color: var(--teal); }
+.price-display .amount { font-size: 32px; font-weight: 800; color: var(--teal); }
+.price-display .unit { font-size: 12px; color: var(--text3); margin-left: 4px; }
+.free-price-tag {
+  background: var(--teal-pale); color: var(--teal);
+  padding: 6px 14px; border-radius: 8px;
+  font-family: var(--font-display); font-size: 14px; font-weight: 800;
+}
+
+.availability-box h4 {
+  font-size: 11px; font-weight: 700; color: var(--text1);
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 8px;
+}
+.availability-list {
+  list-style: none; padding: 0;
+}
+.availability-list li {
+  display: flex; justify-content: space-between; padding: 6px 0;
+  border-bottom: 1px solid var(--border); font-size: 11px;
+}
+.availability-list .day { font-weight: 600; text-transform: capitalize; color: var(--text1); }
+.availability-list .time { color: var(--text3); }
+
+.not-renting-msg {
+  text-align: center; padding: 24px; color: var(--text3);
+}
+.not-renting-msg h3 { font-family: var(--font-display); font-size: 14px; color: var(--text1); margin-top: 4px; }
+.not-renting-msg p { font-size: 11px; margin-top: 4px; }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+.safety-actions { display: flex; flex-direction: column; gap: 8px; }
+
+/* Buttons */
+.w-full { width: 100%; }
+.mb-12 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.mt-16 { margin-top: 16px; }
+.btn-ghost { background: none; border: none; cursor: pointer; font-family: var(--font-body); font-size: 12px; color: var(--text2); padding: 8px 14px; border-radius: 10px; }
+.btn-ghost:hover { background: var(--bg); }
+.btn-ghost.danger { color: var(--red); }
+.btn-ghost.danger:hover { background: #fff5f5; }
+.items-center { display: flex; align-items: center; }
+.gap-2 { gap: 8px; }
+.flex { display: flex; }
+.pb-24 { padding-bottom: 80px; }
+.sticky-top { position: sticky; top: 20px; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 100;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-content {
+  background: #fff; border-radius: 16px; padding: 24px;
+  max-width: 400px; width: 100%;
+}
+.modal-content h3 { font-family: var(--font-display); font-size: 16px; margin-bottom: 8px; }
+.modal-content select {
+  width: 100%; padding: 10px; border: 1.5px solid var(--border);
+  border-radius: 10px; font-family: var(--font-body); font-size: 12px;
+  background: var(--bg); color: var(--text1);
+}
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+.loading-page {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+}
+.error-state {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; color: var(--red); font-size: 14px;
+}

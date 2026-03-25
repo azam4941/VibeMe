@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: vibeme-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FAST2SMS_API_KEY
+        sync: false

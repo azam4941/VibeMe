@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RentMe</string>
+    <string name="title_activity_main">RentMe</string>
+    <string name="package_name">com.azam.rentme</string>
+    <string name="custom_url_scheme">com.azam.rentme</string>
+</resources>

@@ -1,0 +1,65 @@
+/* ProfilePage.css — VibeMe My Profile */
+.myprofile-page .mp-hero { padding-bottom: 20px; }
+
+.mp-top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.mp-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: #fff; }
+.mp-edit { font-size: 14px; color: var(--purple-mid); font-weight: 600; cursor: pointer; }
+
+.mp-card { display: flex; align-items: center; gap: 14px; }
+.mp-meta .mp-name { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: #fff; }
+.mp-meta .mp-phone { font-size: 14px; color: #999; margin-top: 2px; }
+.mp-verified-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--teal-pale); border-radius: 6px; padding: 3px 8px; margin-top: 4px;
+  color: var(--teal);
+}
+.mp-verified-badge span { font-size: 12px; font-weight: 700; }
+
+.mp-stats-row { display: flex; gap: 8px; margin-top: 14px; }
+.mps {
+  flex: 1; background: var(--navy2); border-radius: 10px; padding: 10px;
+  text-align: center; border: 1px solid var(--navy4);
+}
+.mps-num { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: #fff; }
+.mps-label { font-size: 12px; color: #888; margin-top: 2px; }
+
+.mp-body { padding: 16px 18px 100px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Rent Banner */
+.mp-rent-banner { padding: 14px 16px; }
+.mrb-row { display: flex; align-items: center; justify-content: space-between; }
+.mrb-left .mrb-title { font-size: 15px; font-weight: 700; color: var(--text1); }
+.mrb-left .mrb-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
+.mrb-earning {
+  margin-top: 12px; background: var(--teal-pale); border-radius: 10px;
+  padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
+}
+.mre-label { font-size: 13px; color: var(--teal); }
+.mre-val { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--teal); }
+
+/* Menu */
+.mp-menu { overflow: hidden; }
+.mp-menu-item {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s;
+}
+.mp-menu-item:last-child { border-bottom: none; }
+.mp-menu-item:hover { background: var(--bg); }
+.mmi-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.mmi-text { flex: 1; }
+.mmi-title { font-size: 15px; font-weight: 600; color: var(--text1); }
+.mmi-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
+.mmi-arrow { color: #ccc; }
+.mmi-badge {
+  font-size: 11px; background: var(--purple-pale); color: var(--purple);
+  padding: 3px 10px; border-radius: 6px; font-weight: 700;
+}
+
+/* Sign Out */
+.mp-signout {
+  padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer;
+}
+.mp-signout:hover { background: #fff5f5; }

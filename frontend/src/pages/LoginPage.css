@@ -1,0 +1,284 @@
+/* LoginPage.css — VibeMe Splash + Login + OTP */
+
+/* ====== SPLASH ====== */
+.vibe-splash {
+  min-height: 100vh;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.splash-circles { position: absolute; inset: 0; pointer-events: none; }
+.sc {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(127, 119, 221, 0.12);
+}
+.sc1 { width: 280px; height: 280px; top: -60px; right: -80px; }
+.sc2 { width: 180px; height: 180px; bottom: 80px; left: -60px; }
+.sc3 { width: 100px; height: 100px; bottom: 200px; right: 30px; }
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
+  flex: 1;
+  justify-content: center;
+}
+.splash-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 22px;
+  background: var(--navy3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.splash-logo {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -2px;
+}
+.splash-logo span { color: var(--purple-mid); }
+
+.splash-tag {
+  font-size: 13px;
+  color: #555;
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+.splash-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 40px;
+}
+.sdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--navy3);
+}
+.sdot.active { background: var(--purple-light); }
+
+.splash-cta { margin-top: 24px; padding: 14px 48px; border-radius: 14px; }
+
+.splash-signin {
+  font-size: 11px;
+  color: #444;
+  margin-top: 12px;
+  cursor: pointer;
+}
+.splash-signin span { color: var(--purple-mid); font-weight: 600; }
+
+.splash-footer {
+  padding: 20px;
+  text-align: center;
+  z-index: 1;
+}
+.splash-footer p { font-size: 9px; color: #333; }
+
+/* ====== LOGIN & OTP ====== */
+.vibe-login {
+  min-height: 100vh;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+}
+.login-hero {
+  padding: calc(48px + var(--safe-top, 0px)) 24px 28px;
+}
+.login-back {
+  color: var(--purple-mid);
+  cursor: pointer;
+  margin-bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+.login-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+.login-title span { color: var(--purple-mid); }
+
+.login-sub {
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+}
+.otp-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+}
+.otp-sub {
+  font-size: 11px;
+  color: #666;
+  margin-top: 6px;
+}
+.otp-sub span { color: var(--purple-mid); }
+
+/* Form Card */
+.login-form-card {
+  background: #fff;
+  flex: 1;
+  border-radius: 28px 28px 0 0;
+  padding: 28px 24px;
+  animation: slideUp 0.4s ease;
+}
+
+/* Phone Input */
+.phone-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.phone-flag { font-size: 18px; }
+.phone-sep { width: 1px; height: 16px; background: #ddd; }
+.phone-code { font-size: 13px; font-weight: 600; color: var(--text2); }
+.phone-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-family: var(--font-body);
+  outline: none;
+  color: var(--text1);
+}
+.phone-input::placeholder { color: var(--text3); }
+
+.login-submit { margin-top: 8px; border-radius: 12px; }
+
+.login-terms {
+  font-size: 10px;
+  color: #aaa;
+  text-align: center;
+  margin-top: 14px;
+  line-height: 1.6;
+}
+.login-terms span { color: var(--purple-light); cursor: pointer; }
+
+/* Social Login */
+.social-sep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+.sep-line { flex: 1; height: 1px; background: #eee; }
+.sep-text { font-size: 10px; color: #bbb; }
+
+.social-row { display: flex; gap: 10px; }
+.social-btn {
+  flex: 1;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: #555;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background 0.15s;
+}
+.social-btn:hover { background: var(--bg); }
+
+.login-secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 10px;
+  color: #aaa;
+}
+
+/* ====== OTP Boxes ====== */
+.otp-boxes {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 12px 0 16px;
+}
+.otp-box {
+  width: 44px;
+  height: 52px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--purple);
+  outline: none;
+  transition: all 0.15s;
+  background: #fff;
+}
+.otp-box:focus, .otp-box.active {
+  border-color: var(--purple-light);
+  box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.15);
+}
+.otp-box.filled {
+  border-color: var(--purple);
+  background: var(--purple-pale);
+}
+
+.otp-timer {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--purple);
+  text-align: center;
+  font-family: var(--font-display);
+  margin: 8px 0;
+}
+
+.otp-resend {
+  text-align: center;
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 16px;
+}
+.otp-resend span {
+  color: var(--purple);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.otp-note {
+  margin-top: 20px;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.otp-note-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--purple);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.otp-note p {
+  font-size: 9px;
+  color: var(--text3);
+  line-height: 1.6;
+}
