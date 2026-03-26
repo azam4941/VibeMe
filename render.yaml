@@ -1,7 +1,7 @@
 services:
   - type: web
     name: vibeme-backend
-    runtime: node
+    env: node
     plan: free
     rootDir: backend
     buildCommand: npm install && npm run build
@@ -18,8 +18,9 @@ services:
       - key: NODE_ENV
         value: production
 
-  - type: static
+  - type: web
     name: vibeme-frontend
+    env: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
