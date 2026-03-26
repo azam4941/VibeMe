@@ -16,7 +16,7 @@ import { AdminModule } from './admin/admin.module';
   imports: [
     // Database
     MongooseModule.forRoot(
-      process.env.MONGO_URI || 'mongodb://localhost:27017/rentme',
+      process.env.MONGO_URI || 'mongodb+srv://azamali1001199_db_user:Azamali%409931@cluster0.cwuhc7f.mongodb.net/rentme?retryWrites=true&w=majority',
       { autoIndex: true },
     ),
 

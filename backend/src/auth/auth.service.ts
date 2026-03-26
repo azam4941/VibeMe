@@ -11,13 +11,22 @@ if (!admin.apps.length) {
   try {
     let serviceAccount: any;
 
-    // Option 1: Read from environment variable (for Render/production)
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     } else {
-      // Option 2: Read from local file (for development)
-      const serviceAccountPath = path.resolve(__dirname, '..', '..', 'src', 'config', 'firebase-service-account.json');
-      serviceAccount = require(serviceAccountPath);
+      try {
+        const serviceAccountPath = path.resolve(__dirname, '..', '..', 'src', 'config', 'firebase-service-account.json');
+        serviceAccount = require(serviceAccountPath);
+      } catch (e) {
+        // Fallback: Embed JSON directly if file/env var missing (useful for first-time Render deploy)
+        serviceAccount = {
+          "type": "service_account",
+          "project_id": "vibeme-bce95",
+          "private_key_id": "c5a555c5135eda60c313fe87fe1b9c890e3f4271",
+          "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCky6OG2ZmutH6x\ns3IBJ1swP5RvCu6U0ubY9CPPOiuI5z/MJZQySYG7LVJQx2JuxKMW100TsPssyGfK\nCojwNNN6gr6DuuwVtDYl0C35dGSVPKIswq01B+V5/885Ip8k+bPJmUZUjR3jLR09\nTz43EGjcWDv3ME7ThjXbDEFhd6LeTX99vVH+K/bF6ryhcnzvBzLb0wEakeRckMHm\n8/WTc42lMDr2r/BheCj6gzTW55ldL+CNuoiiISmsr/gBxNVX0inFVs9ooKNJgMyd\nijC5Vennssj2sAZpt9Gkq/ea9KJPiGz0lBdvVvgIRu14cifErtkZGJUeR4j8/qN4\nnhn5hwQ5AgMBAAECggEAESNzi4n0W3C+j10N8XRGHcey+HRu2Q/w/aWwVrQiRG/m\nWOUcmzk9UnnVany97i6plm3IQJDCoobqEl9TnAWma8KOrTUCqgQusHKM4XlbH5Ep\nfZW2fUInua8ivjqtSeNlMQVthMwTTGXL+W0VF5VvjmDnxZ6iyAlYbwJAh3IxgERs\nwDu90hyj1BRmp7eEZWxJ7c2tX9Hf/vAFUIh63sMI+f+e0RwjYDVAvqTsDktVkvoN\nwptLvIkxfonUWxHZFiHZ+K+enfkWC99D0rZ9oCKDyXAuZVhOYT011oyVCNp6KJCg\nlSpb+OY1/DDCVUZGzGyJzzf4P3MxtAQsrO0upB8d7QKBgQDZVm+s7VpYyF2SM4BB\nYPGP/1CVewWLXAg8lBndN1x9FwCjzQZvdcOzf+g1n6JHh2cP+ZvN8fsHvvxJ7pUI\nJVSl3LHkgOuxaN7CD4qNTgRVbTMl7y+IqVDorjPOx6vz+x0LTetmf3LHBbLsQyUy\nhvmeGaa4JfKk3nd3q/QjohgN7QKBgQDCHG4RBNHh3ztZ4dc5AzfP36av9sDaqp0w\nKd9KnYrE1UPB/cjF282DY7ADf78+nIdZGnhkGYRXZ8TxW7K65ZahMd+fOjzHsveO\n45YQJqAclEQXchvLK6knVx1KBX3sAt2nA3Gh4AslRFFfTeX5lMJu9kA4Kzyv8L80\nGLDaHPYl/QKBgDo8oBYNT81Ee1ZGuJJMQM5eEqDLYzPxiD97S+bsA7t9I23A7X2G\nZ9c8aeOcj+Zs0OAF+YrY0XRE5+ODq6mQHzuGhKB/LyjNugr0ESNGCYE+jpsWmX0c\nKZL/wuAgvuHUova5fV9svTu5OjV21IvSgSatJvBnMrqc5hRKHlRCBgINAoGAH9G3\nPTT0DrmgKgi6Vg8v+/Rmh5vEW1Pydm22u619jOyEse0fF0gDtVEHDlvHhsTz7uhG\n6enA5u8Mup/UeYyfF4dsZ9aNFhNBP3wRIk6immy3iLxcz/41OUyvcW3bCXAi03je\nDLIEQbSkPiIv26zF/piBSHPV++VUAn81pltvAiUCgYB8R3Q4VclKMtGB3RMrepHG\nXB/InukXSyZuxM+tKzrdu0iyGFJoIUFu5MUdGu8liZcKInLvjaMKCwte/rnaJl0W\nYgRZq6F+7mjzTKSSarbm8wsXpEFW5+p58RUJJDUcGcbHd6NJeP9P7uXTkxf57W5f\n6vyTDIhnzpbP6DQVzfL7kA==\n-----END PRIVATE KEY-----\n",
+          "client_email": "firebase-adminsdk-fbsvc@vibeme-bce95.iam.gserviceaccount.com"
+        };
+      }
     }
 
     admin.initializeApp({
