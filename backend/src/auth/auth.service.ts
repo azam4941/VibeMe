@@ -9,9 +9,17 @@ import * as path from 'path';
 // Initialize Firebase Admin
 if (!admin.apps.length) {
   try {
-    // Navigate from dist/auth or src/auth -> project root -> src/config
-    const serviceAccountPath = path.resolve(__dirname, '..', '..', 'src', 'config', 'firebase-service-account.json');
-    const serviceAccount = require(serviceAccountPath);
+    let serviceAccount: any;
+
+    // Option 1: Read from environment variable (for Render/production)
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } else {
+      // Option 2: Read from local file (for development)
+      const serviceAccountPath = path.resolve(__dirname, '..', '..', 'src', 'config', 'firebase-service-account.json');
+      serviceAccount = require(serviceAccountPath);
+    }
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
