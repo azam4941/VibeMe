@@ -18,10 +18,8 @@ services:
       - key: NODE_ENV
         value: production
 
-  - type: web
+  - type: static
     name: vibeme-frontend
-    runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
