@@ -1,4 +1,4 @@
-/* ProfileSetupPage.css — VibeMe */
+﻿/* ProfileSetupPage.css — VibeMe */
 .setup-page {
   min-height: 100vh;
   background: var(--bg);
@@ -45,8 +45,8 @@
 
 .setup-title {
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   color: #fff;
 }
 .setup-sub {
@@ -177,14 +177,14 @@
 .price-sym {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--purple);
 }
 .price-inp {
   flex: 1;
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text1);
   border: none;
   outline: none;

@@ -1,0 +1,25 @@
+{
+  "azamUsers": [
+    {
+      "id": "69c640f40ad0de01983897ba",
+      "name": "Azamer",
+      "phone": "8287804712"
+    }
+  ],
+  "fakeUsers": [
+    {
+      "id": "69c684ccad4a3e0d79b1fa4d",
+      "name": "Sara Khan"
+    },
+    {
+      "id": "69c684ccad4a3e0d79b1fa50",
+      "name": "Rahul Sharma"
+    },
+    {
+      "id": "69c684ccad4a3e0d79b1fa53",
+      "name": "Ayesha Singh"
+    }
+  ],
+  "rooms": 3,
+  "messages": 9
+}

@@ -1,4 +1,4 @@
-/* ChatPage.css — VibeMe */
+﻿/* ChatPage.css — VibeMe */
 .chat-container {
   display: flex;
   min-height: 100vh;
@@ -24,7 +24,7 @@
 .sidebar-header h2 {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
 }
 .badge-accent {

@@ -1,14 +1,14 @@
-/* WalletPage.css — VibeMe */
+﻿/* WalletPage.css — VibeMe */
 .wallet-page .wallet-header { padding-bottom: 20px; }
 .wh-top-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; position: relative; }
-.wh-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: #fff; flex: 1; }
+.wh-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: #fff; flex: 1; }
 .wh-history { font-size: 14px; color: var(--purple-mid); font-weight: 600; cursor: pointer; }
 
 .wallet-card {
   background: var(--navy2); border-radius: 18px; padding: 18px; border: 1px solid var(--navy4);
 }
 .wc-label { font-size: 14px; color: #999; margin-bottom: 4px; }
-.wc-balance { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+.wc-balance { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -1px; }
 .wc-frozen { font-size: 13px; color: var(--amber); margin-top: 6px; }
 .wc-btns { display: flex; gap: 8px; margin-top: 14px; }
 .wcb-add {
@@ -45,7 +45,7 @@
 .txn-meta { flex: 1; }
 .txn-title { font-size: 14px; font-weight: 600; color: var(--text1); }
 .txn-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
-.txn-amount { font-family: var(--font-display); font-size: 15px; font-weight: 800; }
+.txn-amount { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
 .txn-plus { color: var(--teal); }
 .txn-minus { color: var(--pink); }
 
@@ -77,7 +77,7 @@
 .payment-sheet-title {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
 }
 .payment-sheet-close {
@@ -103,7 +103,7 @@
 .payment-amount-value {
   font-family: var(--font-display);
   font-size: 28px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
 }
 .payment-methods-list {
@@ -135,7 +135,7 @@
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   flex-shrink: 0;
 }
 .pm-paytm { background: #00B9F1; color: #fff; }
@@ -210,8 +210,8 @@
 }
 .custom-amount-prefix {
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--purple-mid);
 }
 .custom-amount-input {
@@ -220,8 +220,8 @@
   border: none;
   outline: none;
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   color: #fff;
 }
 .custom-amount-input::placeholder {

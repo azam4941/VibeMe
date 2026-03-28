@@ -1,4 +1,4 @@
-/* LoginPage.css — VibeMe Splash + Login + OTP */
+﻿/* LoginPage.css — VibeMe Splash + Login + OTP */
 
 /* ====== SPLASH ====== */
 .vibe-splash {
@@ -41,8 +41,8 @@
 }
 .splash-logo {
   font-family: var(--font-display);
-  font-size: 48px;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 700;
   color: #fff;
   letter-spacing: -2px;
 }
@@ -104,7 +104,7 @@
 .login-title {
   font-family: var(--font-display);
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
   line-height: 1.2;
 }
@@ -118,7 +118,7 @@
 .otp-title {
   font-family: var(--font-display);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
 }
 .otp-sub {
@@ -223,8 +223,8 @@
   border: 2px solid var(--border);
   text-align: center;
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--purple);
   outline: none;
   transition: all 0.15s;

@@ -1,4 +1,4 @@
-/* UserDetailPage.css — VibeMe */
+﻿/* UserDetailPage.css — VibeMe */
 .user-detail-container {
   min-height: 100vh;
   background: var(--bg);
@@ -44,7 +44,7 @@
   border: 2px solid var(--navy);
 }
 .hero-name {
-  font-family: var(--font-display); font-size: 20px; font-weight: 800;
+  font-family: var(--font-display); font-size: 16px; font-weight: 700;
   color: #fff; display: flex; align-items: center; gap: 6px;
 }
 .verified-icon-inline { margin-left: 4px; }
@@ -69,7 +69,7 @@
   padding: 18px;
 }
 .about-section h2 {
-  font-family: var(--font-display); font-size: 14px; font-weight: 800;
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
   color: var(--text1); margin-bottom: 8px;
 }
 .bio-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
@@ -105,12 +105,12 @@
   font-family: var(--font-display); margin-bottom: 16px;
 }
 .price-display .currency { font-size: 18px; color: var(--teal); }
-.price-display .amount { font-size: 32px; font-weight: 800; color: var(--teal); }
+.price-display .amount { font-size: 24px; font-weight: 700; color: var(--teal); }
 .price-display .unit { font-size: 12px; color: var(--text3); margin-left: 4px; }
 .free-price-tag {
   background: var(--teal-pale); color: var(--teal);
   padding: 6px 14px; border-radius: 8px;
-  font-family: var(--font-display); font-size: 14px; font-weight: 800;
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
 }
 
 .availability-box h4 {

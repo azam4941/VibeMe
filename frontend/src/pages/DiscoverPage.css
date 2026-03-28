@@ -1,9 +1,10 @@
-/* DiscoverPage.css — VibeMe Home */
+﻿/* DiscoverPage.css — VibeMe Home (Updated) */
 .discover-page .home-header { padding-bottom: 14px; }
 
 .hh-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.hh-greeting { font-size: 14px; color: #999; margin-bottom: 2px; }
-.hh-sub { font-size: 16px; color: #fff; font-weight: 600; }
+.hh-logo { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+.hh-greeting { font-size: 11px; color: #999; margin-bottom: 2px; font-weight: 400; }
+.hh-sub { font-size: 14px; color: #fff; font-weight: 600; }
 .hh-right { display: flex; gap: 8px; align-items: center; }
 .hh-notif {
   width: 34px; height: 34px; background: var(--navy3); border-radius: 10px;
@@ -19,26 +20,69 @@
   display: flex; background: var(--navy2); border-radius: 22px; padding: 3px; margin-top: 6px;
 }
 .ht {
-  flex: 1; text-align: center; font-size: 13px; font-weight: 600; padding: 8px;
+  flex: 1; text-align: center; font-size: 11px; font-weight: 600; padding: 8px;
   border-radius: 18px; color: #555; cursor: pointer; font-family: var(--font-body); transition: all 0.2s;
 }
 .ht.on { background: var(--purple-light); color: #fff; }
 
-/* Categories */
+/* Categories — Grid Layout */
 .home-cats { padding: 12px 18px 8px; }
-.cats-label { font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: 1px; margin-bottom: 8px; }
-.cats-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
-.cats-scroll::-webkit-scrollbar { display: none; }
-.cat {
-  padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 600;
-  white-space: nowrap; cursor: pointer; border: 1.5px solid; transition: all 0.15s;
-  font-family: var(--font-body);
+.cats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cats-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1px; }
+.cats-meta { display: flex; align-items: center; gap: 8px; }
+.cats-count { font-size: 9px; font-weight: 500; color: var(--purple-light); }
+.cats-clear {
+  font-size: 9px; font-weight: 600; color: var(--pink); cursor: pointer;
+  display: flex; align-items: center; gap: 2px;
 }
-.cat-active { background: var(--purple); color: #fff; border-color: var(--purple); }
-.cat-purple { background: #fff; color: var(--purple); border-color: #CECBF6; }
-.cat-pink { background: #fff; color: var(--pink); border-color: #F4C0D1; }
-.cat-teal { background: #fff; color: var(--teal); border-color: #9FE1CB; }
-.cat-coral { background: #fff; color: var(--coral); border-color: #F0997B; }
+.cats-clear:active { opacity: 0.7; }
+
+.cats-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Vibe Chip — Checkbox style */
+.vibe-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  cursor: pointer; border: 1.5px solid; transition: all 0.15s;
+  font-family: var(--font-body); user-select: none;
+}
+.vibe-check {
+  width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all 0.15s; font-size: 8px;
+}
+
+/* Unselected states */
+.vibe-purple { background: #fff; color: #666; border-color: #CECBF6; }
+.vibe-purple .vibe-check { border-color: #CECBF6; background: #fff; }
+
+.vibe-pink { background: #fff; color: #666; border-color: #F4C0D1; }
+.vibe-pink .vibe-check { border-color: #F4C0D1; background: #fff; }
+
+.vibe-teal { background: #fff; color: #666; border-color: #9FE1CB; }
+.vibe-teal .vibe-check { border-color: #9FE1CB; background: #fff; }
+
+.vibe-amber { background: #fff; color: #666; border-color: #F0D07B; }
+.vibe-amber .vibe-check { border-color: #F0D07B; background: #fff; }
+
+.vibe-coral { background: #fff; color: #666; border-color: #F0997B; }
+.vibe-coral .vibe-check { border-color: #F0997B; background: #fff; }
+
+/* Selected states */
+.vibe-purple.vibe-selected { background: #534AB7; color: #fff; border-color: #534AB7; }
+.vibe-purple.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
+
+.vibe-pink.vibe-selected { background: #D4537E; color: #fff; border-color: #D4537E; }
+.vibe-pink.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
+
+.vibe-teal.vibe-selected { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+.vibe-teal.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
+
+.vibe-amber.vibe-selected { background: #BA7517; color: #fff; border-color: #BA7517; }
+.vibe-amber.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
+
+.vibe-coral.vibe-selected { background: #D85A30; color: #fff; border-color: #D85A30; }
+.vibe-coral.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
 
 /* Stats */
 .home-list { padding: 0 18px 80px; display: flex; flex-direction: column; gap: 12px; }
@@ -47,36 +91,36 @@
   flex: 1; background: #fff; border-radius: 12px; border: 1px solid var(--border);
   padding: 10px; text-align: center;
 }
-.hs-num { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--purple); }
-.hs-label { font-size: 11px; color: var(--text3); font-weight: 500; }
+.hs-num { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--purple); }
+.hs-label { font-size: 9px; color: var(--text3); font-weight: 400; }
 
 /* User Cards */
 .user-card { margin-bottom: 0; }
 .uc-top { display: flex; align-items: center; gap: 12px; padding: 12px 14px 10px; }
 .uc-meta { flex: 1; }
 .uc-name {
-  font-family: var(--font-display); font-size: 14px; font-weight: 800; color: var(--text1);
+  font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--text1);
   display: flex; align-items: center; gap: 5px;
 }
-.uc-location { font-size: 12px; color: var(--text3); margin-top: 2px; display: flex; align-items: center; gap: 3px; }
+.uc-location { font-size: 9px; color: var(--text3); margin-top: 2px; display: flex; align-items: center; gap: 3px; font-weight: 400; }
 
 .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 
 .uc-tags { padding: 0 14px; display: flex; flex-wrap: wrap; gap: 5px; }
 .uc-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 8px; }
-.uc-price { font-family: var(--font-display); font-size: 15px; font-weight: 800; color: var(--purple); }
-.uc-price-unit { font-size: 12px; font-weight: 400; color: var(--text3); }
-.uc-rating { font-size: 12px; color: var(--amber); font-weight: 600; }
-.uc-sessions { font-size: 11px; color: var(--text3); font-weight: 400; }
+.uc-price { font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--purple); }
+.uc-price-unit { font-size: 10px; font-weight: 400; color: var(--text3); }
+.uc-rating { font-size: 9px; color: var(--amber); font-weight: 600; }
+.uc-sessions { font-size: 9px; color: var(--text3); font-weight: 400; }
 
 .uc-btns { display: flex; gap: 8px; padding: 4px 14px 14px; }
 .ucb-chat {
   flex: 1; background: var(--purple); border-radius: 10px; padding: 10px;
-  text-align: center; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+  text-align: center; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer;
   font-family: var(--font-body);
 }
 .ucb-book {
   flex: 1; background: var(--purple-pale); border-radius: 10px; padding: 10px;
-  text-align: center; color: var(--purple); font-size: 13px; font-weight: 700; cursor: pointer;
+  text-align: center; color: var(--purple); font-size: 11px; font-weight: 600; cursor: pointer;
   font-family: var(--font-body);
 }

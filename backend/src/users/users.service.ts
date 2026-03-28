@@ -116,7 +116,7 @@ export class UsersService {
     page?: number;
     limit?: number;
   }): Promise<{ users: UserDocument[]; total: number; page: number; totalPages: number }> {
-    const query: any = { isBlocked: false, rentMode: true };
+    const query: any = { isBlocked: { $ne: true } };
 
     if (filters.interests && filters.interests.length > 0) {
       query.interests = { $in: filters.interests };

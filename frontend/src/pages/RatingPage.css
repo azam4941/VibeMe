@@ -1,4 +1,4 @@
-/* RatingPage.css — VibeMe */
+﻿/* RatingPage.css — VibeMe */
 .rating-page {
   min-height: 100vh;
   background: var(--bg);
@@ -14,7 +14,7 @@
   width: 64px; height: 64px; border-radius: 50%; background: var(--teal);
   display: flex; align-items: center; justify-content: center;
 }
-.rt-title { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: #fff; margin-top: 14px; text-align: center; }
+.rt-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; margin-top: 14px; text-align: center; }
 .rt-sub { font-size: 11px; color: #666; margin-top: 4px; text-align: center; }
 
 .rating-summary {
@@ -23,7 +23,7 @@
   position: relative; z-index: 1;
 }
 .rs-item { text-align: center; }
-.rs-val { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--purple-mid); }
+.rs-val { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--purple-mid); }
 .rs-label { font-size: 8px; color: #555; }
 
 .rating-body {

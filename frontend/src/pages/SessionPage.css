@@ -1,4 +1,4 @@
-/* SessionPage.css — VibeMe */
+﻿/* SessionPage.css — VibeMe */
 .session-page {
   min-height: 100vh;
   background: var(--navy);
@@ -20,7 +20,7 @@
 
 .sess-partner { display: flex; align-items: center; gap: 10px; padding: 12px 20px; width: 100%; }
 .sp-info { flex: 1; }
-.sp-name { font-family: var(--font-display); font-size: 14px; font-weight: 800; color: #fff; }
+.sp-name { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: #fff; }
 .sp-vibe { font-size: 9px; color: #666; }
 .sp-rating { font-size: 10px; color: var(--amber); }
 
@@ -31,7 +31,7 @@
   position: absolute; inset: 16px; border-radius: 50%; background: var(--navy2);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-.timer-num { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+.timer-num { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -1px; }
 .timer-label { font-size: 9px; color: #555; letter-spacing: 1px; margin-top: 2px; }
 .timer-pulse { font-size: 9px; color: var(--purple-mid); margin-top: 20px; letter-spacing: 2px; font-weight: 600; }
 
@@ -40,7 +40,7 @@
   flex: 1; background: var(--navy2); border-radius: 14px; padding: 12px; text-align: center; border: 1px solid var(--navy4);
 }
 .cc-label { font-size: 8px; color: #555; letter-spacing: 0.5px; margin-bottom: 4px; }
-.cc-val { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: #fff; }
+.cc-val { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; }
 .cc-sub { font-size: 8px; color: #444; margin-top: 2px; }
 
 .session-actions { display: flex; gap: 10px; padding: 16px 20px; width: 100%; }

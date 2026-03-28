@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bell, MapPin } from 'lucide-react';
+import { Bell, MapPin, Check, X } from 'lucide-react';
 import api from '../services/api';
 import './DiscoverPage.css';
 
-const CATEGORIES = [
-  { label: 'All Vibes', color: 'active' },
-  { label: 'Gossip', color: 'purple' },
-  { label: 'Vent', color: 'pink' },
-  { label: 'Support', color: 'teal' },
-  { label: 'Timepass', color: 'coral' },
+const VIBE_CATEGORIES = [
+  { label: 'All Vibes', color: 'purple' },
+  { label: 'Gossip Partner', color: 'purple' },
+  { label: 'Vent Listener', color: 'pink' },
+  { label: 'Emotional Support', color: 'teal' },
+  { label: 'Timepass / Fun', color: 'purple' },
+  { label: 'Deep Talks', color: 'amber' },
+  { label: 'Late Night Chats', color: 'amber' },
+  { label: 'Rona Chahte Ho', color: 'pink' },
+  { label: 'Frustration Nikalna', color: 'pink' },
+  { label: 'Life Advice', color: 'teal' },
+  { label: 'Relationship Talk', color: 'teal' },
+  { label: 'Career Guidance', color: 'teal' },
+  { label: 'Study Buddy', color: 'coral' },
+  { label: 'Gaming Partner', color: 'coral' },
+  { label: 'Motivational Talk', color: 'teal' },
+  { label: 'Just Exist Together', color: 'amber' },
 ];
 
 const AVATAR_COLORS = ['avatar-purple', 'avatar-pink', 'avatar-teal', 'avatar-amber', 'avatar-coral'];
@@ -19,25 +30,23 @@ const DiscoverPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
-  const [activeCategory, setActiveCategory] = useState('All Vibes');
+  const [selectedVibes, setSelectedVibes] = useState([]);
   const [mode, setMode] = useState('find');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ online: 0, minPrice: 0, maxPrice: 0, avgRating: 0 });
 
-  const fetchUsers = async (category) => {
+  const fetchUsers = async (vibes) => {
     setLoading(true);
     try {
       const filters = {};
-      if (category && category !== 'All Vibes') {
-        // Map category labels to interest keywords
-        const mapping = { 'Gossip': 'Gossip', 'Vent': 'Vent Listener', 'Support': 'Emotional Support', 'Timepass': 'Timepass' };
-        filters.interests = mapping[category] || category;
+      const active = vibes.filter(v => v !== 'All Vibes');
+      if (active.length > 0) {
+        filters.interests = active.join(',');
       }
       const data = await api.discover(filters);
       const filtered = (data.users || []).filter(u => u._id !== user?._id);
       setUsers(filtered);
 
-      // Calculate stats
       if (filtered.length > 0) {
         const prices = filtered.map(u => u.pricePerMinute || 0).filter(p => p > 0);
         const ratings = filtered.map(u => u.rating || 0).filter(r => r > 0);
@@ -57,12 +66,23 @@ const DiscoverPage = () => {
   };
 
   useEffect(() => {
-    fetchUsers(activeCategory);
-  }, [activeCategory, user]);
+    fetchUsers(selectedVibes);
+  }, [selectedVibes, user]);
 
-  const handleCategoryClick = (label) => {
-    setActiveCategory(label);
+  const toggleVibe = (label) => {
+    if (label === 'All Vibes') {
+      setSelectedVibes([]);
+      return;
+    }
+    setSelectedVibes(prev => {
+      if (prev.includes(label)) {
+        return prev.filter(v => v !== label);
+      }
+      return [...prev, label];
+    });
   };
+
+  const clearAll = () => setSelectedVibes([]);
 
   const getInitials = (name) => {
     if (!name) return '??';
@@ -86,11 +106,14 @@ const DiscoverPage = () => {
     }
   };
 
+  const selectedCount = selectedVibes.length;
+
   return (
     <div className="discover-page page">
       <div className="home-header dark-header">
         <div className="hh-row">
           <div>
+            <div className="hh-logo">VibeMe</div>
             <div className="hh-greeting">{getGreeting()}, {user?.name?.split(' ')[0] || 'there'} 👋</div>
             <div className="hh-sub">Find your vibe today</div>
           </div>
@@ -108,17 +131,34 @@ const DiscoverPage = () => {
       </div>
 
       <div className="home-cats">
-        <div className="cats-label">BROWSE BY VIBE</div>
-        <div className="cats-scroll">
-          {CATEGORIES.map(cat => (
-            <div
-              key={cat.label}
-              className={`cat cat-${activeCategory === cat.label ? 'active' : cat.color}`}
-              onClick={() => handleCategoryClick(cat.label)}
-            >
-              {cat.label}
+        <div className="cats-header">
+          <div className="cats-label">BROWSE BY VIBE</div>
+          {selectedCount > 0 && (
+            <div className="cats-meta">
+              <span className="cats-count">{selectedCount} vibe{selectedCount > 1 ? 's' : ''} selected</span>
+              <span className="cats-clear" onClick={clearAll}><X size={10} /> Clear All</span>
             </div>
-          ))}
+          )}
+        </div>
+        <div className="cats-grid">
+          {VIBE_CATEGORIES.map(cat => {
+            const isAll = cat.label === 'All Vibes';
+            const isSelected = isAll
+              ? selectedVibes.length === 0
+              : selectedVibes.includes(cat.label);
+            return (
+              <div
+                key={cat.label}
+                className={`vibe-chip vibe-${cat.color} ${isSelected ? 'vibe-selected' : ''}`}
+                onClick={() => toggleVibe(cat.label)}
+              >
+                <span className="vibe-check">
+                  {isSelected ? <Check size={10} strokeWidth={3} /> : null}
+                </span>
+                <span className="vibe-text">{cat.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -130,9 +170,9 @@ const DiscoverPage = () => {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text3)' }}>Loading vibes...</div>
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text3)', fontSize: '12px' }}>Loading vibes...</div>
         ) : users.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text3)' }}>No vibes found in this category</div>
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text3)', fontSize: '12px' }}>No vibes found in this category</div>
         ) : (
           users.map((u, i) => (
             <div key={u._id} className="user-card card">
