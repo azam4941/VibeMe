@@ -11,6 +11,7 @@ import { ChatModule } from './chat/chat.module';
 import { BookingModule } from './booking/booking.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { AdminModule } from './admin/admin.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { AdminModule } from './admin/admin.module';
     BookingModule,
     RatingsModule,
     AdminModule,
+    PaymentsModule,
   ],
   providers: [
     // Apply rate limiting globally

@@ -7,10 +7,8 @@ import api from '../services/api';
 import './WalletPage.css';
 
 const PAYMENT_METHODS = [
-  { id: 'paytm', name: 'Paytm', desc: 'Pay via Paytm wallet or UPI', icon: '₱', iconClass: 'pm-paytm' },
-  { id: 'phonepe', name: 'PhonePe', desc: 'Pay via PhonePe UPI', icon: '₽', iconClass: 'pm-phonepe' },
-  { id: 'card', name: 'Credit / Debit Card', desc: 'Visa, Mastercard, RuPay', icon: '💳', iconClass: 'pm-card' },
-  { id: 'upi', name: 'Other UPI', desc: 'Google Pay, BHIM, etc.', icon: 'U', iconClass: 'pm-upi' },
+  { id: 'razorpay', name: 'Pay Online', desc: 'UPI, Cards, Net Banking via Razorpay', icon: '💳', iconClass: 'pm-card' },
+  { id: 'wallet', name: 'Wallet Balance', desc: 'Use existing wallet balance', icon: '💰', iconClass: 'pm-upi' },
 ];
 
 const WalletPage = () => {
@@ -28,10 +26,10 @@ const WalletPage = () => {
   // Payment sheet state
   const [showPaymentSheet, setShowPaymentSheet] = useState(false);
   const [paymentMode, setPaymentMode] = useState('add'); // 'add' or 'withdraw'
-  const [selectedAmount, setSelectedAmount] = useState(0);
   const [customAmount, setCustomAmount] = useState('');
   const [selectedMethod, setSelectedMethod] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [upiId, setUpiId] = useState('');
 
   const fetchWallet = useCallback(async () => {
     try {
@@ -51,9 +49,9 @@ const WalletPage = () => {
 
   const openPaymentSheet = (mode, amount = 0) => {
     setPaymentMode(mode);
-    setSelectedAmount(amount);
     setCustomAmount(amount > 0 ? String(amount) : '');
-    setSelectedMethod('');
+    setSelectedMethod(mode === 'add' ? 'razorpay' : 'wallet');
+    setUpiId('');
     setShowPaymentSheet(true);
   };
 
@@ -62,37 +60,132 @@ const WalletPage = () => {
     setSelectedMethod('');
     setCustomAmount('');
     setProcessing(false);
+    setUpiId('');
+  };
+
+  // Razorpay Add Money flow
+  const handleRazorpayPayment = async (amount) => {
+    try {
+      setProcessing(true);
+
+      // Step 1: Create order from backend
+      const orderData = await api.request('/payments/create-order', {
+        method: 'POST',
+        body: JSON.stringify({ amount }),
+      });
+
+      // Step 2: If simulated mode (no Razorpay keys), directly add funds
+      if (orderData.simulated) {
+        const result = await api.request('/payments/verify', {
+          method: 'POST',
+          body: JSON.stringify({
+            razorpayOrderId: orderData.orderId,
+            razorpayPaymentId: `pay_sim_${Date.now()}`,
+            razorpaySignature: 'simulated',
+            amount,
+          }),
+        });
+
+        if (result.success) {
+          showAlert(`₹${amount} added to wallet! 🎉`, 'success');
+          if (setUser && result.user) setUser(result.user);
+          fetchWallet();
+          closePaymentSheet();
+        }
+        return;
+      }
+
+      // Step 3: Real Razorpay checkout
+      if (typeof window.Razorpay === 'undefined') {
+        showAlert('Payment gateway loading. Please try again.', 'error');
+        setProcessing(false);
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: amount * 100,
+        currency: 'INR',
+        name: 'VibeMe',
+        description: 'Wallet Top-up',
+        order_id: orderData.orderId,
+        prefill: {
+          contact: user?.phoneNumber || '',
+        },
+        theme: { color: '#534AB7' },
+        handler: async (response) => {
+          try {
+            const result = await api.request('/payments/verify', {
+              method: 'POST',
+              body: JSON.stringify({
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+                amount,
+              }),
+            });
+
+            if (result.success) {
+              showAlert(`₹${amount} added successfully! 🎉`, 'success');
+              if (setUser && result.user) setUser(result.user);
+              fetchWallet();
+              closePaymentSheet();
+            }
+          } catch (err) {
+            showAlert('Payment verification failed: ' + err.message, 'error');
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            showAlert('Payment cancelled', 'info');
+            setProcessing(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      showAlert('Failed to initiate payment: ' + err.message, 'error');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Withdraw flow
+  const handleWithdraw = async (amount) => {
+    try {
+      setProcessing(true);
+
+      const result = await api.request('/payments/withdraw', {
+        method: 'POST',
+        body: JSON.stringify({ amount, upiId: upiId || undefined }),
+      });
+
+      if (result.success) {
+        showAlert(`₹${amount} withdrawal initiated! Will be credited in 2-3 hours.`, 'success');
+        if (setUser && result.user) setUser(result.user);
+        fetchWallet();
+        closePaymentSheet();
+      }
+    } catch (err) {
+      showAlert(err.message || 'Withdrawal failed', 'error');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleConfirmPayment = async () => {
-    const amount = parseInt(customAmount) || selectedAmount;
+    const amount = parseInt(customAmount);
     if (!amount || amount <= 0) {
       showAlert('Please enter a valid amount', 'error');
       return;
     }
-    if (!selectedMethod) {
-      showAlert('Please select a payment method', 'error');
-      return;
-    }
 
-    setProcessing(true);
-    try {
-      if (paymentMode === 'add') {
-        const updatedUser = await api.addFunds(amount);
-        const methodName = PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name || 'wallet';
-        showAlert(`₹${amount} added via ${methodName}!`, 'success');
-        if (setUser) setUser(updatedUser);
-      } else {
-        const updatedUser = await api.withdrawFunds(amount);
-        const methodName = PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name || 'wallet';
-        showAlert(`₹${amount} withdrawn to ${methodName}!`, 'success');
-        if (setUser) setUser(updatedUser);
-      }
-      fetchWallet();
-      closePaymentSheet();
-    } catch (err) {
-      showAlert(err.message || `Failed to ${paymentMode === 'add' ? 'add money' : 'withdraw'}`, 'error');
-      setProcessing(false);
+    if (paymentMode === 'add') {
+      await handleRazorpayPayment(amount);
+    } else {
+      await handleWithdraw(amount);
     }
   };
 
@@ -129,7 +222,7 @@ const WalletPage = () => {
         <div className="section-title">RECENT TRANSACTIONS</div>
         <div className="txn-list card">
           {wallet.transactions && wallet.transactions.length > 0 ? (
-            wallet.transactions.slice(0, 5).map((t, i) => (
+            wallet.transactions.slice(0, 10).map((t, i) => (
               <div key={i} className="txn">
                 <div className={`txn-icon ${t.type === 'credit' ? 'ti-green' : 'ti-red'}`}>
                   {t.type === 'credit' ? '➕' : '➖'}
@@ -161,7 +254,7 @@ const WalletPage = () => {
         </div>
       </div>
 
-      {/* Payment Method Bottom Sheet */}
+      {/* Payment Bottom Sheet */}
       {showPaymentSheet && (
         <div className="payment-overlay" onClick={closePaymentSheet}>
           <div className="payment-sheet" onClick={e => e.stopPropagation()}>
@@ -207,36 +300,31 @@ const WalletPage = () => {
               ))}
             </div>
 
-            {/* Payment Methods */}
-            <div className="payment-methods-list">
-              {PAYMENT_METHODS.map(method => (
-                <div
-                  key={method.id}
-                  className={`payment-method-item ${selectedMethod === method.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedMethod(method.id)}
-                >
-                  <div className={`payment-method-icon ${method.iconClass}`}>
-                    {method.id === 'card' ? <CreditCard size={22} /> : method.icon}
-                  </div>
-                  <div className="payment-method-info">
-                    <div className="payment-method-name">{method.name}</div>
-                    <div className="payment-method-desc">{method.desc}</div>
-                  </div>
-                  <div className="payment-method-check">
-                    {selectedMethod === method.id && <Check size={14} />}
-                  </div>
+            {/* UPI ID for withdrawal */}
+            {paymentMode === 'withdraw' && (
+              <div className="custom-amount-section" style={{ marginBottom: '12px' }}>
+                <div className="custom-amount-input-wrap">
+                  <span className="custom-amount-prefix" style={{ fontSize: '12px' }}>UPI</span>
+                  <input
+                    type="text"
+                    className="custom-amount-input"
+                    placeholder="Enter UPI ID (optional)"
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    style={{ fontSize: '13px' }}
+                  />
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
 
             <button
               className="payment-confirm-btn"
-              disabled={processing || !selectedMethod || !(parseInt(customAmount) > 0)}
+              disabled={processing || !(parseInt(customAmount) > 0)}
               onClick={handleConfirmPayment}
             >
               {processing
                 ? 'Processing...'
-                : `${paymentMode === 'add' ? 'Add' : 'Withdraw'} ₹${customAmount || '0'}`
+                : `${paymentMode === 'add' ? 'Pay' : 'Withdraw'} ₹${customAmount || '0'}`
               }
             </button>
           </div>

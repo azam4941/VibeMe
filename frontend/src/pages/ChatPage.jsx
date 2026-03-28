@@ -26,6 +26,19 @@ const ChatPage = () => {
   
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const messagesRef = useRef(messages);
+
+  // Keep ref in sync
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  // 0. Ensure socket is connected
+  useEffect(() => {
+    if (!socketService.isConnected()) {
+      socketService.connect();
+    }
+  }, []);
 
   // 1. Fetch Rooms
   useEffect(() => {
@@ -45,25 +58,28 @@ const ChatPage = () => {
 
   // 2. Set Active Room & Join Socket
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !user?._id) return;
     
+    // If rooms are loaded, set active room
     const room = rooms.find(r => r._id === roomId);
     if (room) {
       setActiveRoom(room);
-      fetchMessages(roomId);
-      
-      // Socket Join
-      socketService.joinRoom(roomId);
-      
-      // Mark as read
-      api.markAsRead(roomId).catch(console.error);
-      socketService.markRead(roomId, user._id);
     }
+    
+    // Fetch messages
+    fetchMessages(roomId);
+    
+    // Socket Join
+    socketService.joinRoom(roomId);
+    
+    // Mark as read
+    api.markAsRead(roomId).catch(console.error);
+    socketService.markRead(roomId, user._id);
 
     return () => {
       if (roomId) socketService.leaveRoom(roomId);
     };
-  }, [roomId, rooms]);
+  }, [roomId, rooms, user]);
 
   const fetchMessages = async (id) => {
     try {
@@ -77,56 +93,74 @@ const ChatPage = () => {
 
   // 3. Socket Event Listeners
   useEffect(() => {
-    socketService.onNewMessage((msg) => {
-      if (msg.roomId === roomId) {
-        setMessages(prev => [...prev, msg]);
+    if (!user?._id) return;
+
+    const handleNewMessage = (msg) => {
+      const currentRoomId = roomId; // capture from closure
+      if (msg.roomId?.toString() === currentRoomId || msg.roomId === currentRoomId) {
+        // Check for duplicates
+        setMessages(prev => {
+          const exists = prev.some(m => m._id === msg._id);
+          if (exists) return prev;
+          return [...prev, msg];
+        });
         scrollToBottom();
         
         // Auto-mark read if we're in the room
-        if (msg.receiverId === user._id) {
-          socketService.markRead(roomId, user._id);
+        const receiverId = msg.receiverId?._id || msg.receiverId;
+        if (receiverId === user._id) {
+          socketService.markRead(currentRoomId, user._id);
         }
       }
       // Update room list preview
       setRooms(prev => prev.map(r => 
-        r._id === msg.roomId ? { ...r, lastMessage: msg.message, lastMessageAt: msg.timestamp } : r
+        r._id === (msg.roomId?._id || msg.roomId) 
+          ? { ...r, lastMessage: msg.message, lastMessageAt: msg.timestamp || msg.createdAt } 
+          : r
       ).sort((a,b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)));
-    });
+    };
 
-    socketService.onUserTyping(({ userId }) => {
+    const handleTyping = ({ userId: typingUserId }) => {
+      if (typingUserId === user._id) return;
       setTypingUsers(prev => {
         const next = new Set(prev);
-        next.add(userId);
+        next.add(typingUserId);
         return next;
       });
-    });
+    };
 
-    socketService.onUserStopTyping(({ userId }) => {
+    const handleStopTyping = ({ userId: typingUserId }) => {
       setTypingUsers(prev => {
         const next = new Set(prev);
-        next.delete(userId);
+        next.delete(typingUserId);
         return next;
       });
-    });
+    };
 
-    socketService.onMessagesRead(({ roomId: readRoomId, userId: readerId }) => {
+    const handleMessagesRead = ({ roomId: readRoomId, userId: readerId }) => {
       if (readRoomId === roomId && readerId !== user._id) {
         setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
       }
-    });
+    };
 
-    socketService.onMessageError(({ error }) => {
-      alert(`Message failed: ${error}`);
-    });
+    const handleMessageError = ({ error }) => {
+      console.error('Message failed:', error);
+    };
+
+    socketService.onNewMessage(handleNewMessage);
+    socketService.onUserTyping(handleTyping);
+    socketService.onUserStopTyping(handleStopTyping);
+    socketService.onMessagesRead(handleMessagesRead);
+    socketService.onMessageError(handleMessageError);
 
     return () => {
-      socketService.socket?.off('new-message');
-      socketService.socket?.off('user-typing');
-      socketService.socket?.off('user-stop-typing');
-      socketService.socket?.off('messages-read');
-      socketService.socket?.off('message-error');
+      socketService.socket?.off('new-message', handleNewMessage);
+      socketService.socket?.off('user-typing', handleTyping);
+      socketService.socket?.off('user-stop-typing', handleStopTyping);
+      socketService.socket?.off('messages-read', handleMessagesRead);
+      socketService.socket?.off('message-error', handleMessageError);
     };
-  }, [roomId]);
+  }, [roomId, user]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -136,9 +170,10 @@ const ChatPage = () => {
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeRoom) return;
+    if (!newMessage.trim() || !activeRoom || !user?._id) return;
 
     const otherUser = activeRoom.participants.find(p => p._id !== user._id);
+    if (!otherUser) return;
     
     socketService.sendMessage({
       roomId,
@@ -154,19 +189,19 @@ const ChatPage = () => {
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
     
-    // Emit typing start
+    if (!roomId || !user?._id) return;
+    
     socketService.emitTyping(roomId, user._id);
     
-    // Clear existing timeout
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     
-    // Set timeout to emit stop typing
     typingTimeoutRef.current = setTimeout(() => {
       handleStopTyping();
     }, 2000);
   };
 
   const handleStopTyping = () => {
+    if (!roomId || !user?._id) return;
     socketService.emitStopTyping(roomId, user._id);
   };
 
@@ -181,7 +216,7 @@ const ChatPage = () => {
   };
 
   const handleBlockRoom = async () => {
-    if (!window.confirm('Are you sure you want to block this conversation? You will not receive any more messages from this user.')) return;
+    if (!window.confirm('Are you sure you want to block this conversation?')) return;
     try {
       await api.blockChatRoom(roomId);
       alert('Conversation blocked.');
@@ -192,8 +227,10 @@ const ChatPage = () => {
     }
   };
 
+  const otherUser = activeRoom?.participants?.find(p => p._id !== user?._id);
+
   const handleReportInChat = async () => {
-    const reason = window.prompt('Please provide a reason for reporting this user (e.g. Harassment, Abuse, Adult Content):');
+    const reason = window.prompt('Please provide a reason for reporting this user:');
     if (!reason) return;
     try {
       await api.createReport({
@@ -209,10 +246,15 @@ const ChatPage = () => {
 
   if (loading) return <div className="loading-page"><div className="spinner" /></div>;
 
-  const otherUser = activeRoom?.participants.find(p => p._id !== user._id);
   const isAnonymous = activeRoom?.isAnonymous;
-  const isTyping = Array.from(typingUsers).some(id => id !== user._id);
-  const hasRequestedReveal = activeRoom?.revealRequests?.includes(user._id);
+  const isTyping = Array.from(typingUsers).some(id => id !== user?._id);
+  const hasRequestedReveal = activeRoom?.revealRequests?.includes(user?._id);
+
+  const formatTime = (ts) => {
+    if (!ts) return '';
+    const d = new Date(ts);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div className="chat-container">
@@ -232,11 +274,12 @@ const ChatPage = () => {
             </div>
           ) : (
             rooms.map(room => {
-              const partner = room.participants.find(p => p._id !== user._id);
+              const partner = room.participants.find(p => p._id !== user?._id);
               const isActive = room._id === roomId;
-              const displayInfo = room.isAnonymous 
-                ? { name: 'Anonymous User', photo: `https://api.dicebear.com/7.x/bottts/svg?seed=${partner?._id}` }
-                : { name: partner?.name, photo: partner?.profilePhoto || `https://avatar.iran.liara.run/public?username=${partner?.name}` };
+              const displayName = room.isAnonymous ? 'Anonymous User' : (partner?.name || 'User');
+              const displayPhoto = room.isAnonymous 
+                ? `https://api.dicebear.com/7.x/bottts/svg?seed=${partner?._id}`
+                : (partner?.profilePhoto || `https://avatar.iran.liara.run/public?username=${partner?.name}`);
 
               return (
                 <div 
@@ -244,14 +287,12 @@ const ChatPage = () => {
                   className={`room-item ${isActive ? 'active' : ''}`}
                   onClick={() => navigate(`/chat/${room._id}`)}
                 >
-                  <img src={displayInfo.photo} alt={displayInfo.name} className="room-avatar" />
+                  <img src={displayPhoto} alt={displayName} className="room-avatar" />
                   <div className="room-info">
                     <div className="room-top">
-                      <span className="room-name">{displayInfo.name}</span>
+                      <span className="room-name">{displayName}</span>
                       {room.lastMessageAt && (
-                        <span className="room-time">
-                          {new Date(room.lastMessageAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </span>
+                        <span className="room-time">{formatTime(room.lastMessageAt)}</span>
                       )}
                     </div>
                     <div className="room-bottom">
@@ -343,7 +384,7 @@ const ChatPage = () => {
             {isAnonymous && (
               <div className="anonymous-banner">
                 <Info size={16} />
-                <span>This chat is anonymous. Identites are hidden until both users agree to reveal them.</span>
+                <span>This chat is anonymous. Identities are hidden until both users agree to reveal them.</span>
               </div>
             )}
 
@@ -351,7 +392,8 @@ const ChatPage = () => {
             <div className="messages-area">
               <AnimatePresence>
                 {messages.map((msg, index) => {
-                  const isMine = msg.senderId._id === user._id || msg.senderId === user._id; // handle populated or raw ID
+                  const senderId = msg.senderId?._id || msg.senderId;
+                  const isMine = senderId === user?._id;
                   
                   return (
                     <motion.div 
@@ -363,9 +405,7 @@ const ChatPage = () => {
                       <div className="message-bubble">
                         <p>{msg.message}</p>
                         <div className="message-meta">
-                          <span className="time">
-                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
-                          </span>
+                          <span className="time">{formatTime(msg.timestamp || msg.createdAt)}</span>
                           {isMine && (
                             <span className="status">
                               {msg.isRead ? <CheckCheck size={12} className="text-accent" /> : <Check size={12} />}

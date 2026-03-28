@@ -9,19 +9,36 @@ class SocketService {
   connect() {
     if (this.socket?.connected) return this.socket;
 
+    console.log('🔌 Connecting to socket at:', SOCKET_URL);
+    
     this.socket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
     });
 
     this.socket.on('connect', () => {
+      console.log('🔌 Socket connected:', this.socket.id);
       const user = JSON.parse(localStorage.getItem('ct_user'));
       if (user?._id) this.register(user._id);
-      console.log('🔌 Connected to server');
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('🔌 Disconnected from server');
+    this.socket.on('disconnect', (reason) => {
+      console.log('🔌 Socket disconnected:', reason);
+    });
+
+    this.socket.on('connect_error', (err) => {
+      console.warn('🔌 Socket connection error:', err.message);
+    });
+
+    this.socket.on('reconnect', (attempt) => {
+      console.log('🔌 Socket reconnected after', attempt, 'attempts');
+      const user = JSON.parse(localStorage.getItem('ct_user'));
+      if (user?._id) this.register(user._id);
     });
 
     return this.socket;
@@ -45,6 +62,14 @@ class SocketService {
 
   onNewMessage(callback) {
     this.socket?.on('new-message', callback);
+  }
+
+  offNewMessage() {
+    this.socket?.off('new-message');
+  }
+
+  onMessageSent(callback) {
+    this.socket?.on('message-sent', callback);
   }
 
   onMessageNotification(callback) {
@@ -87,6 +112,19 @@ class SocketService {
     this.socket?.on('message-error', callback);
   }
 
+  // Identity reveal
+  requestReveal(roomId, userId) {
+    this.socket?.emit('request-reveal', { roomId, userId });
+  }
+
+  onRevealRequested(callback) {
+    this.socket?.on('reveal-requested', callback);
+  }
+
+  onIdentityRevealed(callback) {
+    this.socket?.on('identity-revealed', callback);
+  }
+
   disconnect() {
     this.socket?.disconnect();
     this.socket = null;
@@ -94,6 +132,10 @@ class SocketService {
 
   removeAllListeners() {
     this.socket?.removeAllListeners();
+  }
+
+  isConnected() {
+    return this.socket?.connected || false;
   }
 }
 
