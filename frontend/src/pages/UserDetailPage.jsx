@@ -269,13 +269,21 @@ const UserDetailPage = () => {
                   </div>
 
                   {!isSelf && (
-                    <button 
-                      className="btn btn-primary w-full mt-24"
-                      onClick={handleBookSession}
-                      disabled={isBooking}
-                    >
-                      <Clock size={18} /> {isBooking ? 'Requesting...' : 'Request Session'}
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+                      <button 
+                        className="btn btn-primary w-full"
+                        onClick={handleBookSession}
+                        disabled={isBooking}
+                      >
+                        <Clock size={18} /> {isBooking ? 'Requesting...' : 'Request Session'}
+                      </button>
+                      <button 
+                        className="btn btn-secondary w-full"
+                        onClick={() => navigate('/video-call', { state: { url: `https://meet.jit.si/vibeme_${currentUser?._id}_${profile._id}_${Date.now()}`, partnerName: profile.name } })}
+                      >
+                        📸 Start Video Call
+                      </button>
+                    </div>
                   )}
                 </>
               ) : (

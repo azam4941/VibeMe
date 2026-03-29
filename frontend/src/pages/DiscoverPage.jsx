@@ -251,8 +251,8 @@ const DiscoverPage = () => {
               </div>
 
               <div className="uc-btns">
-                <div className="ucb-book" onClick={() => handleChatNow(u)}>💬 Chat Now</div>
-                <div className="ucb-chat" onClick={() => handleVideoCall(u)}>📸 Video Call</div>
+                <div className="ucb-chat" onClick={() => handleChatNow(u)}>💬 Chat Now</div>
+                <div className="ucb-book" onClick={() => navigate(`/user/${u._id}`)}>👤 View Profile</div>
               </div>
             </div>
           ))
