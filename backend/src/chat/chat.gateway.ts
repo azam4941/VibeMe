@@ -12,8 +12,7 @@ import { ChatService } from './chat.service';
 
 @WebSocketGateway({
   cors: {
-    origin: true, // Allow all origins (production + dev)
-    credentials: true,
+    origin: '*', // Allow all origins explicitly for Capacitor mobile webview
   },
   transports: ['websocket', 'polling'],
 })
