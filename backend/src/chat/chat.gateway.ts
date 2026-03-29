@@ -9,6 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
+import { NotificationService } from '../notifications/notification.service';
 
 @WebSocketGateway({
   cors: {
@@ -23,7 +24,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private connectedUsers = new Map<string, string>(); // userId -> socketId
   private typingTimers = new Map<string, NodeJS.Timeout>(); // key -> timer
 
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    private notificationService: NotificationService,
+  ) {}
 
   handleConnection(client: Socket) {
     console.log(`🔌 Client connected: ${client.id}`);
@@ -110,6 +114,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Emit delivery confirmation back to sender
       client.emit('message-sent', { messageId: message._id, roomId: data.roomId });
+
+      // Create a real notification in DB
+      try {
+        await this.notificationService.notifyNewMessage(data.receiverId, 'Someone');
+      } catch (e) {
+        console.error('Failed to create notification:', e.message);
+      }
     } catch (error) {
       client.emit('message-error', { error: error.message || 'Failed to send message' });
     }

@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Users, ChevronLeft, UserCircle2, Info, 
   Check, CheckCheck, Eye, ShieldAlert, Image as ImageIcon,
-  Flag, Ban, MoreVertical, MessageSquare
+  Flag, Ban, MoreVertical, MessageSquare, Wifi, WifiOff
 } from 'lucide-react';
 import './ChatPage.css';
 import api from '../services/api';
@@ -23,24 +23,46 @@ const ChatPage = () => {
   const [loading, setLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState(new Set());
   const [showSafetyMenu, setShowSafetyMenu] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
   
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const messagesRef = useRef(messages);
+  const currentRoomRef = useRef(roomId);
 
-  // Keep ref in sync
+  // Keep room ref in sync
   useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
+    currentRoomRef.current = roomId;
+  }, [roomId]);
 
-  // 0. Ensure socket is connected
+  // ─── 0. CONNECT SOCKET ON MOUNT ───
   useEffect(() => {
-    if (!socketService.isConnected()) {
-      socketService.connect();
+    console.log('🚀 ChatPage: Initializing socket connection...');
+    const sock = socketService.connect();
+    
+    const onConnect = () => {
+      console.log('✅ ChatPage: Socket is connected!');
+      setSocketConnected(true);
+    };
+    const onDisconnect = () => {
+      console.log('❌ ChatPage: Socket disconnected');
+      setSocketConnected(false);
+    };
+
+    if (sock) {
+      sock.on('connect', onConnect);
+      sock.on('disconnect', onDisconnect);
+      if (sock.connected) setSocketConnected(true);
     }
+
+    return () => {
+      if (sock) {
+        sock.off('connect', onConnect);
+        sock.off('disconnect', onDisconnect);
+      }
+    };
   }, []);
 
-  // 1. Fetch Rooms
+  // ─── 1. FETCH ROOMS ───
   useEffect(() => {
     fetchRooms();
   }, []);
@@ -48,57 +70,56 @@ const ChatPage = () => {
   const fetchRooms = async () => {
     try {
       const data = await api.getChatRooms();
-      setRooms(data);
+      setRooms(data || []);
     } catch (err) {
-      console.error('Failed to load chats');
+      console.error('Failed to load chats:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. Set Active Room & Join Socket
+  // ─── 2. SET ACTIVE ROOM & JOIN SOCKET ───
   useEffect(() => {
     if (!roomId || !user?._id) return;
     
-    // If rooms are loaded, set active room
     const room = rooms.find(r => r._id === roomId);
-    if (room) {
-      setActiveRoom(room);
-    }
+    if (room) setActiveRoom(room);
     
-    // Fetch messages
     fetchMessages(roomId);
     
-    // Socket Join
+    console.log('📌 Joining room:', roomId);
     socketService.joinRoom(roomId);
     
-    // Mark as read
     api.markAsRead(roomId).catch(console.error);
     socketService.markRead(roomId, user._id);
 
     return () => {
-      if (roomId) socketService.leaveRoom(roomId);
+      if (roomId) {
+        console.log('📤 Leaving room:', roomId);
+        socketService.leaveRoom(roomId);
+      }
     };
   }, [roomId, rooms, user]);
 
   const fetchMessages = async (id) => {
     try {
       const msgs = await api.getMessages(id, 100);
-      setMessages(msgs.reverse());
+      setMessages((msgs || []).reverse());
       scrollToBottom();
     } catch (err) {
-      console.error('Failed to load messages');
+      console.error('Failed to load messages:', err);
     }
   };
 
-  // 3. Socket Event Listeners
+  // ─── 3. SOCKET EVENT LISTENERS ───
   useEffect(() => {
     if (!user?._id) return;
 
     const handleNewMessage = (msg) => {
-      const currentRoomId = roomId; // capture from closure
-      if (msg.roomId?.toString() === currentRoomId || msg.roomId === currentRoomId) {
-        // Check for duplicates
+      console.log('📩 New message received:', msg);
+      const msgRoomId = msg.roomId?.toString() || msg.roomId;
+      
+      if (msgRoomId === currentRoomRef.current) {
         setMessages(prev => {
           const exists = prev.some(m => m._id === msg._id);
           if (exists) return prev;
@@ -106,18 +127,18 @@ const ChatPage = () => {
         });
         scrollToBottom();
         
-        // Auto-mark read if we're in the room
         const receiverId = msg.receiverId?._id || msg.receiverId;
         if (receiverId === user._id) {
-          socketService.markRead(currentRoomId, user._id);
+          socketService.markRead(currentRoomRef.current, user._id);
         }
       }
-      // Update room list preview
+      
+      // Update room list
       setRooms(prev => prev.map(r => 
-        r._id === (msg.roomId?._id || msg.roomId) 
+        r._id === msgRoomId 
           ? { ...r, lastMessage: msg.message, lastMessageAt: msg.timestamp || msg.createdAt } 
           : r
-      ).sort((a,b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)));
+      ).sort((a,b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)));
     };
 
     const handleTyping = ({ userId: typingUserId }) => {
@@ -138,69 +159,94 @@ const ChatPage = () => {
     };
 
     const handleMessagesRead = ({ roomId: readRoomId, userId: readerId }) => {
-      if (readRoomId === roomId && readerId !== user._id) {
+      if (readRoomId === currentRoomRef.current && readerId !== user._id) {
         setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
       }
     };
 
     const handleMessageError = ({ error }) => {
-      console.error('Message failed:', error);
+      console.error('❌ Message failed:', error);
+      alert('Message failed: ' + error);
     };
 
+    const handleMessageSent = (data) => {
+      console.log('✅ Message confirmed sent:', data);
+    };
+
+    // Register all listeners
     socketService.onNewMessage(handleNewMessage);
     socketService.onUserTyping(handleTyping);
     socketService.onUserStopTyping(handleStopTyping);
     socketService.onMessagesRead(handleMessagesRead);
     socketService.onMessageError(handleMessageError);
+    socketService.onMessageSent(handleMessageSent);
 
     return () => {
-      socketService.socket?.off('new-message', handleNewMessage);
-      socketService.socket?.off('user-typing', handleTyping);
-      socketService.socket?.off('user-stop-typing', handleStopTyping);
-      socketService.socket?.off('messages-read', handleMessagesRead);
-      socketService.socket?.off('message-error', handleMessageError);
+      socketService._off('new-message', handleNewMessage);
+      socketService._off('user-typing', handleTyping);
+      socketService._off('user-stop-typing', handleStopTyping);
+      socketService._off('messages-read', handleMessagesRead);
+      socketService._off('message-error', handleMessageError);
+      socketService._off('message-sent', handleMessageSent);
     };
-  }, [roomId, user]);
+  }, [user]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    }, 150);
   };
 
-  const handleSend = async (e) => {
-    e.preventDefault();
+  // ─── SEND MESSAGE ───
+  const handleSend = useCallback((e) => {
+    e?.preventDefault();
     if (!newMessage.trim() || !activeRoom || !user?._id) return;
 
     const otherUser = activeRoom.participants.find(p => p._id !== user._id);
     if (!otherUser) return;
     
-    socketService.sendMessage({
+    const msgData = {
       roomId,
       senderId: user._id,
       receiverId: otherUser._id,
       content: newMessage.trim(),
-    });
+    };
+
+    console.log('📤 Sending message:', msgData);
+    socketService.sendMessage(msgData);
+
+    // Optimistic update — add to local messages immediately
+    const optimisticMsg = {
+      _id: 'temp_' + Date.now(),
+      senderId: { _id: user._id, name: user.name },
+      receiverId: otherUser._id,
+      roomId: roomId,
+      message: newMessage.trim(),
+      timestamp: new Date().toISOString(),
+      isRead: false,
+      _optimistic: true,
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    scrollToBottom();
 
     setNewMessage('');
-    handleStopTyping();
-  };
+    handleStopTypingEmit();
+  }, [newMessage, activeRoom, user, roomId]);
 
-  const handleTyping = (e) => {
+  // ─── TYPING ───
+  const handleInputChange = (e) => {
     setNewMessage(e.target.value);
     
     if (!roomId || !user?._id) return;
-    
     socketService.emitTyping(roomId, user._id);
     
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    
     typingTimeoutRef.current = setTimeout(() => {
-      handleStopTyping();
+      handleStopTypingEmit();
     }, 2000);
   };
 
-  const handleStopTyping = () => {
+  const handleStopTypingEmit = () => {
     if (!roomId || !user?._id) return;
     socketService.emitStopTyping(roomId, user._id);
   };
@@ -263,7 +309,13 @@ const ChatPage = () => {
         <div className="chat-sidebar glass">
         <div className="sidebar-header">
           <h2>Messages</h2>
-          <span className="badge badge-accent">{rooms.length}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {socketConnected 
+              ? <Wifi size={14} color="var(--teal)" />
+              : <WifiOff size={14} color="var(--red)" />
+            }
+            <span className="badge badge-accent">{rooms.length}</span>
+          </div>
         </div>
         
         <div className="rooms-list">
@@ -271,7 +323,7 @@ const ChatPage = () => {
             <div className="empty-rooms text-muted text-center pt-24 text-sm">
               <MessageSquare size={32} opacity={0.3} className="mx-auto mb-12" />
               <p>No conversations yet.</p>
-              <p>Book a session or message someone to start chatting!</p>
+              <p>Browse people and start chatting!</p>
             </div>
           ) : (
             rooms.map(room => {
@@ -316,9 +368,8 @@ const ChatPage = () => {
         {!activeRoom ? (
           <div className="chat-placeholder">
             <div className="glass empty-chat-card">
-              <Users size={48} className="mb-16 text-primary" />
-              <h3>Select a conversation</h3>
-              <p className="text-muted">Choose a chat from the sidebar to start messaging</p>
+              <div className="spinner" style={{ margin: '0 auto 16px' }} />
+              <h3>Loading conversation...</h3>
             </div>
           </div>
         ) : (
@@ -341,6 +392,11 @@ const ChatPage = () => {
                     {isAnonymous && <ShieldAlert size={14} className="ml-8 text-accent inline" />}
                   </h3>
                   {isTyping && <span className="typing-indicator">typing...</span>}
+                  {!isTyping && (
+                    <span className="typing-indicator" style={{ color: socketConnected ? 'var(--teal)' : 'var(--red)', fontStyle: 'normal', fontSize: '9px' }}>
+                      {socketConnected ? '● Online' : '● Connecting...'}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -352,7 +408,7 @@ const ChatPage = () => {
                     disabled={hasRequestedReveal}
                   >
                     <Eye size={14} /> 
-                    {hasRequestedReveal ? 'Reveal Requested' : 'Request Reveal'}
+                    {hasRequestedReveal ? 'Requested' : 'Reveal'}
                   </button>
                 )}
                 {!isAnonymous && (
@@ -411,7 +467,8 @@ const ChatPage = () => {
                           <span className="time">{formatTime(msg.timestamp || msg.createdAt)}</span>
                           {isMine && (
                             <span className="status">
-                              {msg.isRead ? <CheckCheck size={12} className="text-accent" /> : <Check size={12} />}
+                              {msg._optimistic ? <Check size={12} style={{ opacity: 0.4 }} /> :
+                               msg.isRead ? <CheckCheck size={12} className="text-accent" /> : <Check size={12} />}
                             </span>
                           )}
                         </div>
@@ -424,21 +481,20 @@ const ChatPage = () => {
             </div>
 
             {/* Input Area */}
-            <form className="chat-input-area glass" onSubmit={handleSend}>
-              <button type="button" className="btn-attachment">
-                <ImageIcon size={20} />
-              </button>
+            <form className="chat-input-area" onSubmit={handleSend}>
               <input
                 type="text"
-                placeholder="Type a message..."
+                placeholder={socketConnected ? "Type a message..." : "Connecting..."}
                 value={newMessage}
-                onChange={handleTyping}
+                onChange={handleInputChange}
                 className="message-input"
+                autoComplete="off"
+                disabled={!socketConnected}
               />
               <button 
                 type="submit" 
-                className={`btn-send ${!newMessage.trim() ? 'disabled' : ''}`}
-                disabled={!newMessage.trim()}
+                className={`btn-send ${!newMessage.trim() || !socketConnected ? 'disabled' : ''}`}
+                disabled={!newMessage.trim() || !socketConnected}
               >
                 <Send size={18} />
               </button>

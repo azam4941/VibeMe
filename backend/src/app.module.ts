@@ -12,6 +12,7 @@ import { BookingModule } from './booking/booking.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { AdminModule } from './admin/admin.module';
 import { PaymentsModule } from './payments/payments.module';
+import { NotificationsModule } from './notifications/notification.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { PaymentsModule } from './payments/payments.module';
     RatingsModule,
     AdminModule,
     PaymentsModule,
+    NotificationsModule,
   ],
   providers: [
     // Apply rate limiting globally

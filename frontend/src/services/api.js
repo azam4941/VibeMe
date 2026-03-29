@@ -318,6 +318,27 @@ class ApiService {
       body: JSON.stringify(data),
     });
   }
+
+  // Notifications
+  getNotifications() {
+    return this.request('/notifications');
+  }
+
+  getUnreadNotifCount() {
+    return this.request('/notifications/unread-count');
+  }
+
+  markAllNotifRead() {
+    return this.request('/notifications/read-all', { method: 'PUT' });
+  }
+
+  markNotifRead(id) {
+    return this.request(`/notifications/${id}/read`, { method: 'PUT' });
+  }
+
+  deleteNotif(id) {
+    return this.request(`/notifications/${id}`, { method: 'DELETE' });
+  }
 }
 
 export const api = new ApiService();
