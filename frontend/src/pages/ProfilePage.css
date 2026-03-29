@@ -1,4 +1,4 @@
-﻿/* ProfilePage.css — VibeMe My Profile */
+/* ProfilePage.css — VibeMe My Profile */
 .myprofile-page .mp-hero { padding-bottom: 20px; }
 
 .mp-top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -62,4 +62,4 @@
 .mp-signout {
   padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer;
 }
-.mp-signout:hover { background: #fff5f5; }
+.mp-signout:hover { background: rgba(255,59,93,0.1); }

@@ -1,4 +1,4 @@
-﻿/* UserDetailPage.css — VibeMe */
+/* UserDetailPage.css — VibeMe */
 .user-detail-container {
   min-height: 100vh;
   background: var(--bg);
@@ -86,7 +86,7 @@
   color: var(--text3); font-size: 12px;
 }
 .review-card {
-  padding: 14px; background: #fff; border-radius: 12px;
+  padding: 14px; background: var(--navy3); border-radius: 12px;
   border: 1px solid var(--border);
 }
 .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -146,7 +146,7 @@
 .btn-ghost { background: none; border: none; cursor: pointer; font-family: var(--font-body); font-size: 12px; color: var(--text2); padding: 8px 14px; border-radius: 10px; }
 .btn-ghost:hover { background: var(--bg); }
 .btn-ghost.danger { color: var(--red); }
-.btn-ghost.danger:hover { background: #fff5f5; }
+.btn-ghost.danger:hover { background: rgba(255,59,93,0.1); }
 .items-center { display: flex; align-items: center; }
 .gap-2 { gap: 8px; }
 .flex { display: flex; }
@@ -160,7 +160,7 @@
   display: flex; align-items: center; justify-content: center; padding: 20px;
 }
 .modal-content {
-  background: #fff; border-radius: 16px; padding: 24px;
+  background: var(--navy2); border-radius: 16px; padding: 24px;
   max-width: 400px; width: 100%;
 }
 .modal-content h3 { font-family: var(--font-display); font-size: 16px; margin-bottom: 8px; }

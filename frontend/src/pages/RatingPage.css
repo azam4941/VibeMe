@@ -1,4 +1,4 @@
-﻿/* RatingPage.css — VibeMe */
+/* RatingPage.css — VibeMe */
 .rating-page {
   min-height: 100vh;
   background: var(--bg);
@@ -33,7 +33,7 @@
   gap: 14px;
 }
 .rb-section {
-  background: #fff;
+  background: var(--navy3);
   border-radius: 14px;
   border: 1px solid var(--border);
   padding: 14px;
@@ -62,6 +62,6 @@
 .rating-textarea {
   width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
   padding: 10px 12px; font-size: 11px; font-family: var(--font-body);
-  color: var(--text1); height: 70px; resize: none; outline: none;
+  color: var(--text1); height: 70px; resize: none; outline: none; background: var(--navy3);
 }
 .rating-textarea:focus { border-color: var(--purple-light); }

@@ -1,4 +1,4 @@
-/* DiscoverPage.css — VibeMe Home (Updated) */
+/* DiscoverPage.css — VibeMe Home (Dark Theme) */
 .discover-page .home-header { padding-bottom: 14px; }
 
 .hh-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -21,7 +21,7 @@
 }
 .ht {
   flex: 1; text-align: center; font-size: 11px; font-weight: 600; padding: 8px;
-  border-radius: 18px; color: #555; cursor: pointer; font-family: var(--font-body); transition: all 0.2s;
+  border-radius: 18px; color: var(--text3); cursor: pointer; font-family: var(--font-body); transition: all 0.2s;
 }
 .ht.on { background: var(--purple-light); color: #fff; }
 
@@ -29,16 +29,16 @@
 .home-list { padding: 10px 18px 80px; display: flex; flex-direction: column; gap: 12px; }
 .home-stats-row { display: flex; gap: 8px; margin-bottom: 6px; margin-top: 4px; }
 .hs-card {
-  flex: 1; background: #fff; border-radius: 12px; border: 1px solid var(--border);
+  flex: 1; background: var(--navy3); border-radius: 12px; border: 1px solid var(--border);
   padding: 10px; text-align: center;
 }
-.hs-num { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--purple); }
+.hs-num { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--purple-light); }
 .hs-label { font-size: 9px; color: var(--text3); font-weight: 400; }
 
 /* Offer Banner */
 .offer-mode-banner {
   background: var(--purple-pale);
-  color: var(--purple);
+  color: var(--purple-light);
   padding: 10px 14px;
   border-radius: 12px;
   font-size: 11px;
@@ -49,7 +49,7 @@
 
 /* Dropdown Container */
 .vibe-dropdown-container {
-  background: #fff;
+  background: var(--navy3);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 0;
@@ -70,7 +70,7 @@
 }
 .cats-clear {
   font-size: 10px; font-weight: 600; color: var(--pink); cursor: pointer;
-  display: flex; align-items: center; gap: 2px; background: var(--bg);
+  display: flex; align-items: center; gap: 2px; background: var(--navy4);
   padding: 4px 8px; border-radius: 8px;
 }
 .cats-clear:active { opacity: 0.7; }
@@ -82,7 +82,7 @@
   padding-top: 16px;
 }
 
-/* Vibe Chip — Checkbox style */
+/* Vibe Chip — Checkbox style (Dark Theme) */
 .vibe-chip {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 500;
@@ -95,21 +95,21 @@
   transition: all 0.15s; font-size: 8px;
 }
 
-/* Unselected states */
-.vibe-purple { background: #fff; color: #666; border-color: #CECBF6; }
-.vibe-purple .vibe-check { border-color: #CECBF6; background: #fff; }
+/* Unselected states — dark backgrounds */
+.vibe-purple { background: var(--navy4); color: var(--text2); border-color: rgba(110,86,255,0.3); }
+.vibe-purple .vibe-check { border-color: rgba(110,86,255,0.4); background: var(--navy2); }
 
-.vibe-pink { background: #fff; color: #666; border-color: #F4C0D1; }
-.vibe-pink .vibe-check { border-color: #F4C0D1; background: #fff; }
+.vibe-pink { background: var(--navy4); color: var(--text2); border-color: rgba(255,66,129,0.3); }
+.vibe-pink .vibe-check { border-color: rgba(255,66,129,0.4); background: var(--navy2); }
 
-.vibe-teal { background: #fff; color: #666; border-color: #9FE1CB; }
-.vibe-teal .vibe-check { border-color: #9FE1CB; background: #fff; }
+.vibe-teal { background: var(--navy4); color: var(--text2); border-color: rgba(0,230,164,0.3); }
+.vibe-teal .vibe-check { border-color: rgba(0,230,164,0.4); background: var(--navy2); }
 
-.vibe-amber { background: #fff; color: #666; border-color: #F0D07B; }
-.vibe-amber .vibe-check { border-color: #F0D07B; background: #fff; }
+.vibe-amber { background: var(--navy4); color: var(--text2); border-color: rgba(255,179,36,0.3); }
+.vibe-amber .vibe-check { border-color: rgba(255,179,36,0.4); background: var(--navy2); }
 
-.vibe-coral { background: #fff; color: #666; border-color: #F0997B; }
-.vibe-coral .vibe-check { border-color: #F0997B; background: #fff; }
+.vibe-coral { background: var(--navy4); color: var(--text2); border-color: rgba(255,102,71,0.3); }
+.vibe-coral .vibe-check { border-color: rgba(255,102,71,0.4); background: var(--navy2); }
 
 /* Selected states */
 .vibe-purple.vibe-selected { background: #534AB7; color: #fff; border-color: #534AB7; }
@@ -142,7 +142,7 @@
 
 .uc-tags { padding: 0 14px; display: flex; flex-wrap: wrap; gap: 5px; }
 .uc-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 8px; }
-.uc-price { font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--purple); }
+.uc-price { font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--purple-light); }
 .uc-price-unit { font-size: 10px; font-weight: 400; color: var(--text3); }
 .uc-rating { font-size: 9px; color: var(--amber); font-weight: 600; }
 .uc-sessions { font-size: 9px; color: var(--text3); font-weight: 400; }
@@ -155,6 +155,6 @@
 }
 .ucb-book {
   flex: 1; background: var(--purple-pale); border-radius: 10px; padding: 10px;
-  text-align: center; color: var(--purple); font-size: 11px; font-weight: 600; cursor: pointer;
+  text-align: center; color: var(--purple-light); font-size: 11px; font-weight: 600; cursor: pointer;
   font-family: var(--font-body); display: flex; justify-content: center; align-items: center; gap: 6px;
 }
