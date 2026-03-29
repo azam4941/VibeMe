@@ -1,4 +1,4 @@
-﻿/* DiscoverPage.css — VibeMe Home (Updated) */
+/* DiscoverPage.css — VibeMe Home (Updated) */
 .discover-page .home-header { padding-bottom: 14px; }
 
 .hh-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -25,19 +25,62 @@
 }
 .ht.on { background: var(--purple-light); color: #fff; }
 
-/* Categories — Grid Layout */
-.home-cats { padding: 12px 18px 8px; }
-.cats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.cats-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1px; }
-.cats-meta { display: flex; align-items: center; gap: 8px; }
-.cats-count { font-size: 9px; font-weight: 500; color: var(--purple-light); }
+/* Stats */
+.home-list { padding: 10px 18px 80px; display: flex; flex-direction: column; gap: 12px; }
+.home-stats-row { display: flex; gap: 8px; margin-bottom: 6px; margin-top: 4px; }
+.hs-card {
+  flex: 1; background: #fff; border-radius: 12px; border: 1px solid var(--border);
+  padding: 10px; text-align: center;
+}
+.hs-num { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--purple); }
+.hs-label { font-size: 9px; color: var(--text3); font-weight: 400; }
+
+/* Offer Banner */
+.offer-mode-banner {
+  background: var(--purple-pale);
+  color: var(--purple);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  border: 1px solid rgba(83, 74, 183, 0.2);
+}
+
+/* Dropdown Container */
+.vibe-dropdown-container {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0;
+  margin-bottom: 4px;
+  overflow: hidden;
+}
+.vibe-dropdown-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.cats-label { font-size: 11px; font-weight: 700; color: var(--text1); display: flex; align-items: center; gap: 8px; }
+.cats-count-badge {
+  background: var(--purple); color: #fff; font-size: 9px; padding: 2px 6px;
+  border-radius: 8px; font-weight: 700;
+}
 .cats-clear {
-  font-size: 9px; font-weight: 600; color: var(--pink); cursor: pointer;
-  display: flex; align-items: center; gap: 2px;
+  font-size: 10px; font-weight: 600; color: var(--pink); cursor: pointer;
+  display: flex; align-items: center; gap: 2px; background: var(--bg);
+  padding: 4px 8px; border-radius: 8px;
 }
 .cats-clear:active { opacity: 0.7; }
 
+/* Categories */
 .cats-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.dropdown-cats-grid {
+  padding: 0 16px 16px; border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
 
 /* Vibe Chip — Checkbox style */
 .vibe-chip {
@@ -84,15 +127,6 @@
 .vibe-coral.vibe-selected { background: #D85A30; color: #fff; border-color: #D85A30; }
 .vibe-coral.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
 
-/* Stats */
-.home-list { padding: 0 18px 80px; display: flex; flex-direction: column; gap: 12px; }
-.home-stats-row { display: flex; gap: 8px; margin-bottom: 4px; }
-.hs-card {
-  flex: 1; background: #fff; border-radius: 12px; border: 1px solid var(--border);
-  padding: 10px; text-align: center;
-}
-.hs-num { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--purple); }
-.hs-label { font-size: 9px; color: var(--text3); font-weight: 400; }
 
 /* User Cards */
 .user-card { margin-bottom: 0; }
@@ -117,10 +151,10 @@
 .ucb-chat {
   flex: 1; background: var(--purple); border-radius: 10px; padding: 10px;
   text-align: center; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer;
-  font-family: var(--font-body);
+  font-family: var(--font-body); display: flex; justify-content: center; align-items: center; gap: 6px;
 }
 .ucb-book {
   flex: 1; background: var(--purple-pale); border-radius: 10px; padding: 10px;
   text-align: center; color: var(--purple); font-size: 11px; font-weight: 600; cursor: pointer;
-  font-family: var(--font-body);
+  font-family: var(--font-body); display: flex; justify-content: center; align-items: center; gap: 6px;
 }

@@ -259,7 +259,8 @@ const ChatPage = () => {
   return (
     <div className="chat-container">
       {/* Sidebar List */}
-      <div className={`chat-sidebar glass ${roomId ? 'hidden-mobile' : ''}`}>
+      {!roomId && (
+        <div className="chat-sidebar glass">
         <div className="sidebar-header">
           <h2>Messages</h2>
           <span className="badge badge-accent">{rooms.length}</span>
@@ -307,9 +308,11 @@ const ChatPage = () => {
           )}
         </div>
       </div>
+      )}
 
       {/* Main Chat Area */}
-      <div className={`chat-main ${!roomId ? 'hidden-mobile' : ''}`}>
+      {roomId && (
+        <div className="chat-main">
         {!activeRoom ? (
           <div className="chat-placeholder">
             <div className="glass empty-chat-card">
@@ -443,6 +446,7 @@ const ChatPage = () => {
           </>
         )}
       </div>
+      )}
     </div>
   );
 };

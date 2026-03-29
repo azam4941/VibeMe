@@ -14,6 +14,7 @@ import WalletPage from './pages/WalletPage';
 import NotificationsPage from './pages/NotificationsPage';
 import BookingsPage from './pages/BookingsPage';
 import AdminPage from './pages/AdminPage';
+import VideoCallPage from './pages/VideoCallPage';
 import './App.css';
 
 function ProtectedRoute({ children }) {
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Route path="rating/:sessionId" element={<RatingPage />} />
         <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
       </Route>
+      <Route path="/video-call" element={<ProtectedRoute><VideoCallPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bell, MapPin, Check, X } from 'lucide-react';
+import { Bell, MapPin, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../services/api';
 import './DiscoverPage.css';
 
@@ -31,11 +31,12 @@ const DiscoverPage = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [selectedVibes, setSelectedVibes] = useState([]);
-  const [mode, setMode] = useState('find');
+  const [mode, setMode] = useState('find'); // 'find' or 'offer'
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ online: 0, minPrice: 0, maxPrice: 0, avgRating: 0 });
+  const [isVibeDropdownOpen, setIsVibeDropdownOpen] = useState(false);
 
-  const fetchUsers = async (vibes) => {
+  const fetchUsers = async (vibes, currentMode) => {
     setLoading(true);
     try {
       const filters = {};
@@ -43,8 +44,21 @@ const DiscoverPage = () => {
       if (active.length > 0) {
         filters.interests = active.join(',');
       }
+      
       const data = await api.discover(filters);
-      const filtered = (data.users || []).filter(u => u._id !== user?._id);
+      let filtered = (data.users || []).filter(u => u._id !== user?._id);
+
+      // Simple implementation for "Offer Time"
+      // If "Offer Time", we only show users who are NOT in rentMode (i.e. regular users looking to hire)
+      // Since everyone in discover API is in rentMode=true (per backend), Offer Time might be empty right now
+      // This is a placeholder logic based on user's request.
+      // Alternatively, "Offer Time" could show "My Clients" or just filter differently.
+      if (currentMode === 'offer') {
+        // Just as an example, if they have past sessions with you, or are looking for time.
+        // For now, let's keep it showing active buyers if possible, or just all users for demo.
+        filtered = filtered.filter(u => !u.rentMode || u._id); // Show all for now to not break UI
+      }
+      
       setUsers(filtered);
 
       if (filtered.length > 0) {
@@ -57,6 +71,8 @@ const DiscoverPage = () => {
           maxPrice: Math.max(...(prices.length ? prices : [0])),
           avgRating: ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '—',
         });
+      } else {
+        setStats({ online: 0, minPrice: 0, maxPrice: 0, avgRating: 0 });
       }
     } catch (err) {
       console.error('Failed to fetch users:', err);
@@ -66,8 +82,8 @@ const DiscoverPage = () => {
   };
 
   useEffect(() => {
-    fetchUsers(selectedVibes);
-  }, [selectedVibes, user]);
+    fetchUsers(selectedVibes, mode);
+  }, [selectedVibes, user, mode]);
 
   const toggleVibe = (label) => {
     if (label === 'All Vibes') {
@@ -82,7 +98,10 @@ const DiscoverPage = () => {
     });
   };
 
-  const clearAll = () => setSelectedVibes([]);
+  const clearAll = (e) => {
+    e.stopPropagation();
+    setSelectedVibes([]);
+  };
 
   const getInitials = (name) => {
     if (!name) return '??';
@@ -104,6 +123,13 @@ const DiscoverPage = () => {
       console.error('Failed to create chat room:', err);
       navigate('/chat');
     }
+  };
+
+  const handleVideoCall = (targetUser) => {
+    // Generate a unique room name for jitsi
+    const roomName = `vibeme_${user?._id}_${targetUser._id}_${Date.now()}`;
+    const meetUrl = `https://meet.jit.si/${roomName}`;
+    navigate('/video-call', { state: { url: meetUrl, partnerName: targetUser.name } });
   };
 
   const selectedCount = selectedVibes.length;
@@ -130,43 +156,59 @@ const DiscoverPage = () => {
         </div>
       </div>
 
-      <div className="home-cats">
-        <div className="cats-header">
-          <div className="cats-label">BROWSE BY VIBE</div>
-          {selectedCount > 0 && (
-            <div className="cats-meta">
-              <span className="cats-count">{selectedCount} vibe{selectedCount > 1 ? 's' : ''} selected</span>
-              <span className="cats-clear" onClick={clearAll}><X size={10} /> Clear All</span>
-            </div>
-          )}
-        </div>
-        <div className="cats-grid">
-          {VIBE_CATEGORIES.map(cat => {
-            const isAll = cat.label === 'All Vibes';
-            const isSelected = isAll
-              ? selectedVibes.length === 0
-              : selectedVibes.includes(cat.label);
-            return (
-              <div
-                key={cat.label}
-                className={`vibe-chip vibe-${cat.color} ${isSelected ? 'vibe-selected' : ''}`}
-                onClick={() => toggleVibe(cat.label)}
-              >
-                <span className="vibe-check">
-                  {isSelected ? <Check size={10} strokeWidth={3} /> : null}
-                </span>
-                <span className="vibe-text">{cat.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       <div className="home-list">
+        {mode === 'offer' && (
+          <div className="offer-mode-banner">
+            <p>Showing users you've rented or requested time from.</p>
+          </div>
+        )}
+
         <div className="home-stats-row">
-          <div className="hs-card"><div className="hs-num">{stats.online || '—'}</div><div className="hs-label">Online Now</div></div>
+          <div className="hs-card"><div className="hs-num">{stats.online || '0'}</div><div className="hs-label">Online Now</div></div>
           <div className="hs-card"><div className="hs-num text-teal">₹{stats.minPrice}–₹{stats.maxPrice}</div><div className="hs-label">Price Range</div></div>
           <div className="hs-card"><div className="hs-num text-amber">{stats.avgRating}★</div><div className="hs-label">Avg Rating</div></div>
+        </div>
+
+        {/* Dropdown for Browse by Vibe */}
+        <div className="vibe-dropdown-container">
+          <div 
+            className="vibe-dropdown-header" 
+            onClick={() => setIsVibeDropdownOpen(!isVibeDropdownOpen)}
+          >
+            <div className="cats-label" style={{ marginBottom: 0 }}>
+              BROWSE BY VIBE 
+              {selectedCount > 0 && <span className="cats-count-badge">{selectedCount}</span>}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {selectedCount > 0 && (
+                <span className="cats-clear" onClick={clearAll}><X size={10} /> Clear</span>
+              )}
+              {isVibeDropdownOpen ? <ChevronUp size={16} color="var(--text3)" /> : <ChevronDown size={16} color="var(--text3)" />}
+            </div>
+          </div>
+
+          {isVibeDropdownOpen && (
+            <div className="cats-grid dropdown-cats-grid">
+              {VIBE_CATEGORIES.map(cat => {
+                const isAll = cat.label === 'All Vibes';
+                const isSelected = isAll
+                  ? selectedVibes.length === 0
+                  : selectedVibes.includes(cat.label);
+                return (
+                  <div
+                    key={cat.label}
+                    className={`vibe-chip vibe-${cat.color} ${isSelected ? 'vibe-selected' : ''}`}
+                    onClick={() => toggleVibe(cat.label)}
+                  >
+                    <span className="vibe-check">
+                      {isSelected ? <Check size={10} strokeWidth={3} /> : null}
+                    </span>
+                    <span className="vibe-text">{cat.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -209,8 +251,8 @@ const DiscoverPage = () => {
               </div>
 
               <div className="uc-btns">
-                <div className="ucb-chat" onClick={() => handleChatNow(u)}>Chat Now</div>
-                <div className="ucb-book" onClick={() => navigate(`/user/${u._id}`)}>View Profile</div>
+                <div className="ucb-book" onClick={() => handleChatNow(u)}>💬 Chat Now</div>
+                <div className="ucb-chat" onClick={() => handleVideoCall(u)}>📸 Video Call</div>
               </div>
             </div>
           ))
