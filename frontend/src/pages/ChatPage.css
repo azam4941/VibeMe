@@ -296,3 +296,78 @@
 .text-primary { color: var(--purple); }
 .line-clamp-1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .flex-shrink-0 { flex-shrink: 0; }
+
+/* ─── Voice Call Overlay ─── */
+.voice-call-screen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, #0c0c22 0%, #1a0a3e 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.vc-caller-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 16px;
+  box-shadow: 0 0 40px rgba(110, 86, 255, 0.4);
+}
+.vc-caller-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+}
+.vc-call-status {
+  font-size: 16px;
+  color: var(--purple-pale);
+  margin-top: 8px;
+  letter-spacing: 1px;
+  font-family: var(--font-display);
+}
+.vc-voice-controls {
+  display: flex;
+  gap: 24px;
+  margin-top: 56px;
+}
+.vc-ctrl-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  background: var(--navy3);
+  color: #fff;
+  transition: all 0.15s;
+}
+.vc-ctrl-btn:hover { background: var(--navy4); }
+.vc-ctrl-btn:active { transform: scale(0.9); }
+.vc-end-call-btn {
+  background: #E24B4A !important;
+}
+.vc-end-call-btn:hover { background: #d63838 !important; }
+
+/* Reconnecting bar */
+.reconnecting-bar {
+  background: #BA7517;
+  color: #fff;
+  text-align: center;
+  padding: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+

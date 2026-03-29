@@ -29,7 +29,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port, '0.0.0.0');
-  console.log(`🚀 RentMe API running on http://192.168.34.37:${port}`);
-  console.log(`📋 Network Access: http://192.168.34.37:${port}/api`);
+  console.log(`🚀 VibeMe API running on port ${port}`);
+  console.log(`📋 Network Access: http://0.0.0.0:${port}/api`);
 }
 bootstrap();

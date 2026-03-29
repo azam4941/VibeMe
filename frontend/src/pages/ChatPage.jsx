@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Users, ChevronLeft, UserCircle2, Info, 
   Check, CheckCheck, Eye, ShieldAlert, Image as ImageIcon,
-  Flag, Ban, MoreVertical, MessageSquare, Wifi, WifiOff
+  Flag, Ban, MoreVertical, MessageSquare, Wifi, WifiOff,
+  Phone, Video
 } from 'lucide-react';
 import './ChatPage.css';
 import api from '../services/api';
@@ -24,6 +25,10 @@ const ChatPage = () => {
   const [typingUsers, setTypingUsers] = useState(new Set());
   const [showSafetyMenu, setShowSafetyMenu] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [voiceCallDuration, setVoiceCallDuration] = useState(0);
+  const [voiceCallState, setVoiceCallState] = useState('idle'); // idle | calling | active | ended
+  const voiceTimerRef = useRef(null);
   
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -401,6 +406,42 @@ const ChatPage = () => {
               </div>
 
               <div className="header-actions">
+                {/* Voice Call Button */}
+                <button
+                  className="btn btn-icon btn-sm"
+                  title="Voice Call"
+                  onClick={() => {
+                    setShowVoiceCall(true);
+                    setVoiceCallState('calling');
+                    setVoiceCallDuration(0);
+                    setTimeout(() => {
+                      setVoiceCallState('active');
+                      voiceTimerRef.current = setInterval(() => {
+                        setVoiceCallDuration(prev => prev + 1);
+                      }, 1000);
+                    }, 2000);
+                  }}
+                >
+                  <Phone size={16} />
+                </button>
+
+                {/* Video Call Button */}
+                <button
+                  className="btn btn-icon btn-sm"
+                  title="Video Call"
+                  onClick={() => {
+                    const partnerName = isAnonymous ? 'Anonymous User' : (otherUser?.name || 'User');
+                    navigate('/video-call', {
+                      state: {
+                        url: `https://meet.jit.si/vibeme_${user?._id}_${otherUser?._id}_${Date.now()}`,
+                        partnerName,
+                      }
+                    });
+                  }}
+                >
+                  <Video size={16} />
+                </button>
+
                 {isAnonymous && (
                   <button 
                     className={`btn btn-sm ${hasRequestedReveal ? 'btn-success' : 'btn-outline'}`}
@@ -502,6 +543,48 @@ const ChatPage = () => {
           </>
         )}
       </div>
+      )}
+
+      {/* ─── VOICE CALL OVERLAY ─── */}
+      {showVoiceCall && (
+        <div className="voice-call-screen">
+          <div className="vc-caller-avatar">
+            {(isAnonymous ? 'AU' : (otherUser?.name || 'U').slice(0, 2)).toUpperCase()}
+          </div>
+          <div className="vc-caller-name">
+            {isAnonymous ? 'Anonymous User' : otherUser?.name}
+          </div>
+          <div className="vc-call-status">
+            {voiceCallState === 'calling' && '📞 Calling...'}
+            {voiceCallState === 'active' && `${String(Math.floor(voiceCallDuration / 60)).padStart(2, '0')}:${String(voiceCallDuration % 60).padStart(2, '0')}`}
+            {voiceCallState === 'ended' && 'Call Ended'}
+          </div>
+          <div className="vc-voice-controls">
+            <button 
+              className="vc-ctrl-btn"
+              onClick={() => { /* toggle mute */ }}
+            >
+              🎤
+            </button>
+            <button 
+              className="vc-ctrl-btn vc-end-call-btn"
+              onClick={() => {
+                clearInterval(voiceTimerRef.current);
+                setVoiceCallState('ended');
+                setTimeout(() => {
+                  setShowVoiceCall(false);
+                  setVoiceCallState('idle');
+                  setVoiceCallDuration(0);
+                }, 1500);
+              }}
+            >
+              📵
+            </button>
+            <button className="vc-ctrl-btn">
+              🔊
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

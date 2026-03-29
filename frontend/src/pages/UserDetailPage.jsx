@@ -320,7 +320,7 @@ const UserDetailPage = () => {
         <div className="modal-overlay" onClick={() => setShowReportModal(false)}>
           <div className="modal-content glass" onClick={e => e.stopPropagation()}>
             <h3>Report {profile.name}</h3>
-            <p className="text-muted text-sm mb-16">Please let us know why you are reporting this user. This helps us keep RentMe safe.</p>
+            <p className="text-muted text-sm mb-16">Please let us know why you are reporting this user. This helps us keep VibeMe safe.</p>
             
             <select 
               className="input mb-12"
