@@ -1,19 +1,28 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { User, UserDocument } from '../users/user.schema';
 import * as crypto from 'crypto';
+import Razorpay = require('razorpay');
 
 @Injectable()
 export class PaymentsService {
+  private razorpay: InstanceType<typeof Razorpay>;
   private razorpayKeyId: string;
   private razorpayKeySecret: string;
 
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {
-    this.razorpayKeyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder';
-    this.razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || 'placeholder_secret';
+    this.razorpayKeyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_SWycOSiz5MvgZA';
+    this.razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || 'WqghuL4BYfRe2uMOlfN6KAb5';
+
+    this.razorpay = new Razorpay({
+      key_id: this.razorpayKeyId,
+      key_secret: this.razorpayKeySecret,
+    });
+
+    console.log('💳 Razorpay initialized with key:', this.razorpayKeyId);
   }
 
   /**
@@ -24,47 +33,28 @@ export class PaymentsService {
       throw new BadRequestException('Amount must be between ₹1 and ₹50,000');
     }
 
-    // If Razorpay keys are configured, create a real order
-    if (this.razorpayKeyId && this.razorpayKeyId !== 'rzp_test_placeholder') {
-      try {
-        const Razorpay = require('razorpay');
-        const instance = new Razorpay({
-          key_id: this.razorpayKeyId,
-          key_secret: this.razorpayKeySecret,
-        });
+    try {
+      const order = await this.razorpay.orders.create({
+        amount: amount * 100, // convert to paise
+        currency: 'INR',
+        receipt: `rcpt_${userId.slice(-6)}_${Date.now()}`,
+        notes: { userId, type: 'wallet_topup' },
+      });
 
-        const order = await instance.orders.create({
-          amount: amount * 100, // paise
-          currency: 'INR',
-          receipt: `receipt_${userId}_${Date.now()}`,
-          notes: { userId, type: 'wallet_topup' },
-        });
-
-        return {
-          orderId: order.id,
-          amount,
-          currency: 'INR',
-          keyId: this.razorpayKeyId,
-        };
-      } catch (err) {
-        console.error('Razorpay order creation failed:', err);
-        // Fall through to simulated mode
-      }
+      return {
+        orderId: order.id,
+        amount,
+        currency: 'INR',
+        keyId: this.razorpayKeyId,
+      };
+    } catch (err) {
+      console.error('Razorpay order creation failed:', err);
+      throw new BadRequestException('Failed to create payment order: ' + (err.message || 'Unknown error'));
     }
-
-    // Simulated mode (when Razorpay not configured)
-    const simulatedOrderId = `order_sim_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    return {
-      orderId: simulatedOrderId,
-      amount,
-      currency: 'INR',
-      keyId: this.razorpayKeyId,
-      simulated: true,
-    };
   }
 
   /**
-   * Verify Razorpay payment and add funds to wallet
+   * Verify Razorpay payment signature and add funds to wallet
    */
   async verifyPayment(
     userId: string,
@@ -75,17 +65,15 @@ export class PaymentsService {
   ) {
     if (amount <= 0) throw new BadRequestException('Invalid amount');
 
-    // Real verification if Razorpay is configured
-    if (this.razorpayKeySecret && this.razorpayKeySecret !== 'placeholder_secret' && !razorpayOrderId.startsWith('order_sim_')) {
-      const body = razorpayOrderId + '|' + razorpayPaymentId;
-      const expectedSig = crypto
-        .createHmac('sha256', this.razorpayKeySecret)
-        .update(body)
-        .digest('hex');
+    // Verify Razorpay signature
+    const body = razorpayOrderId + '|' + razorpayPaymentId;
+    const expectedSig = crypto
+      .createHmac('sha256', this.razorpayKeySecret)
+      .update(body)
+      .digest('hex');
 
-      if (expectedSig !== razorpaySignature) {
-        throw new BadRequestException('Invalid payment signature — payment not verified');
-      }
+    if (expectedSig !== razorpaySignature) {
+      throw new BadRequestException('Payment verification failed — invalid signature');
     }
 
     // Add funds to wallet
@@ -97,7 +85,7 @@ export class PaymentsService {
           transactions: {
             type: 'credit',
             amount,
-            description: `Added ₹${amount} to wallet`,
+            description: `Added ₹${amount} via Razorpay`,
             createdAt: new Date(),
           },
         },

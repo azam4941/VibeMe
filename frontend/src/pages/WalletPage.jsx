@@ -74,28 +74,7 @@ const WalletPage = () => {
         body: JSON.stringify({ amount }),
       });
 
-      // Step 2: If simulated mode (no Razorpay keys), directly add funds
-      if (orderData.simulated) {
-        const result = await api.request('/payments/verify', {
-          method: 'POST',
-          body: JSON.stringify({
-            razorpayOrderId: orderData.orderId,
-            razorpayPaymentId: `pay_sim_${Date.now()}`,
-            razorpaySignature: 'simulated',
-            amount,
-          }),
-        });
-
-        if (result.success) {
-          showAlert(`₹${amount} added to wallet! 🎉`, 'success');
-          if (setUser && result.user) setUser(result.user);
-          fetchWallet();
-          closePaymentSheet();
-        }
-        return;
-      }
-
-      // Step 3: Real Razorpay checkout
+      // Step 2: Real Razorpay checkout
       if (typeof window.Razorpay === 'undefined') {
         showAlert('Payment gateway loading. Please try again.', 'error');
         setProcessing(false);
