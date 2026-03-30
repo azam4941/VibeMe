@@ -1,14 +1,20 @@
 import { io } from 'socket.io-client';
 import { getServerBase } from './api';
 
-const SOCKET_URL = getServerBase();
-
 class SocketService {
   socket = null;
-  _pendingListeners = []; // Queue listeners if socket not ready yet
+  _listeners = new Map(); // event -> Set of callbacks (persisted across reconnects)
+
+  _getUrl() {
+    // Compute at call time, not module load time
+    return getServerBase();
+  }
 
   connect() {
-    if (this.socket?.connected) return this.socket;
+    if (this.socket?.connected) {
+      console.log('🔌 Socket already connected:', this.socket.id);
+      return this.socket;
+    }
     
     // Destroy any stale socket
     if (this.socket) {
@@ -17,10 +23,11 @@ class SocketService {
       this.socket = null;
     }
 
-    console.log('🔌 Connecting to socket at:', SOCKET_URL);
+    const url = this._getUrl();
+    console.log('🔌 Connecting to socket at:', url);
     
-    this.socket = io(SOCKET_URL, {
-      transports: ['polling', 'websocket'], // Start with polling for reliability
+    this.socket = io(url, {
+      transports: ['polling', 'websocket'],
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
@@ -32,14 +39,16 @@ class SocketService {
 
     this.socket.on('connect', () => {
       console.log('✅ Socket connected:', this.socket.id);
-      const user = JSON.parse(localStorage.getItem('ct_user') || 'null');
-      if (user?._id) this.register(user._id);
       
-      // Replay any pending listeners
-      this._pendingListeners.forEach(({ event, cb }) => {
-        this.socket.on(event, cb);
-      });
-      this._pendingListeners = [];
+      // Auto-register user
+      const user = JSON.parse(localStorage.getItem('ct_user') || 'null');
+      if (user?._id) {
+        console.log('📡 Auto-registering user:', user._id);
+        this.socket.emit('register', { userId: user._id });
+      }
+      
+      // Re-attach ALL persisted listeners on every connect/reconnect
+      this._reattachListeners();
     });
 
     this.socket.on('disconnect', (reason) => {
@@ -52,23 +61,53 @@ class SocketService {
 
     this.socket.io.on('reconnect', (attempt) => {
       console.log('🔌 Socket reconnected after', attempt, 'attempts');
-      const user = JSON.parse(localStorage.getItem('ct_user') || 'null');
-      if (user?._id) this.register(user._id);
     });
+
+    // Attach any listeners that were registered before connect() was called
+    this._reattachListeners();
 
     return this.socket;
   }
 
-  // Safe event listener — handles case where socket isn't ready yet
+  // Re-attach all persisted listeners to the raw socket
+  _reattachListeners() {
+    if (!this.socket) return;
+    for (const [event, callbacks] of this._listeners.entries()) {
+      for (const cb of callbacks) {
+        // Remove first to prevent duplicates, then add
+        this.socket.off(event, cb);
+        this.socket.on(event, cb);
+      }
+    }
+  }
+
+  // Persistent event listener — survives reconnects
   _on(event, callback) {
+    // Track it in our persistent map
+    if (!this._listeners.has(event)) {
+      this._listeners.set(event, new Set());
+    }
+    this._listeners.get(event).add(callback);
+
+    // Also attach to socket right now if it exists
     if (this.socket) {
+      this.socket.off(event, callback); // prevent duplicates
       this.socket.on(event, callback);
-    } else {
-      this._pendingListeners.push({ event, cb: callback });
     }
   }
 
   _off(event, callback) {
+    // Remove from persistent map
+    if (callback && this._listeners.has(event)) {
+      this._listeners.get(event).delete(callback);
+      if (this._listeners.get(event).size === 0) {
+        this._listeners.delete(event);
+      }
+    } else if (!callback) {
+      this._listeners.delete(event);
+    }
+
+    // Remove from raw socket
     if (this.socket) {
       if (callback) {
         this.socket.off(event, callback);
@@ -76,23 +115,33 @@ class SocketService {
         this.socket.off(event);
       }
     }
-    this._pendingListeners = this._pendingListeners.filter(l => l.event !== event);
   }
 
   register(userId) {
-    this.socket?.emit('register', { userId });
+    if (this.socket?.connected) {
+      console.log('📡 Registering user:', userId);
+      this.socket.emit('register', { userId });
+    } else {
+      console.log('📡 Socket not connected yet, register will happen on connect');
+      // Will be handled by auto-register in the connect handler
+    }
   }
 
   joinRoom(roomId) {
-    if (this.socket?.connected) {
+    const doJoin = () => {
+      console.log('📌 Joining room:', roomId);
       this.socket.emit('join-room', { roomId });
-    } else {
-      // Queue it for after connection
+    };
+
+    if (this.socket?.connected) {
+      doJoin();
+    } else if (this.socket) {
+      // Wait for connection then join
       const handler = () => {
-        this.socket.emit('join-room', { roomId });
+        doJoin();
         this.socket.off('connect', handler);
       };
-      this.socket?.on('connect', handler);
+      this.socket.on('connect', handler);
     }
   }
 
@@ -101,8 +150,12 @@ class SocketService {
   }
 
   sendMessage(data) {
-    console.log('📤 Sending message:', data);
-    this.socket?.emit('send-message', data);
+    if (!this.socket?.connected) {
+      console.error('❌ Cannot send message — socket not connected');
+      return;
+    }
+    console.log('📤 Sending message:', JSON.stringify(data).slice(0, 200));
+    this.socket.emit('send-message', data);
   }
 
   onNewMessage(callback) { this._on('new-message', callback); }
@@ -143,12 +196,12 @@ class SocketService {
     this.socket?.removeAllListeners();
     this.socket?.disconnect();
     this.socket = null;
-    this._pendingListeners = [];
+    this._listeners.clear();
   }
 
   removeAllListeners() {
     this.socket?.removeAllListeners();
-    this._pendingListeners = [];
+    this._listeners.clear();
   }
 
   isConnected() {

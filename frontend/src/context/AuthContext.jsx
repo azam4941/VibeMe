@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
           setIsAuthenticated(true);
           
           socketService.connect();
-          socketService.register(updated._id);
+          // register is auto-handled by socket on connect
         } catch (e) {
           console.error('Auth check failed:', e);
           logout();
@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(true);
     
     socketService.connect();
-    socketService.register(result.user._id);
+    // register is auto-handled by socket on connect
     
     return result;
   };
@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(true);
     
     socketService.connect();
-    socketService.register(result.user._id);
+    // register is auto-handled by socket on connect
     
     return result;
   };

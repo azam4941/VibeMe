@@ -86,21 +86,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       content: string;
     },
   ) {
+    console.log(`📨 send-message from ${client.id}:`, JSON.stringify(data).slice(0, 300));
     try {
       if (!data?.roomId || !data?.senderId || !data?.receiverId || !data?.content) {
+        console.error('❌ Missing required fields:', data);
         client.emit('message-error', { error: 'Missing required fields' });
         return;
       }
 
+      console.log(`💾 Saving message to DB: room=${data.roomId}`);
       const message = await this.chatService.sendMessage(
         data.roomId,
         data.senderId,
         data.receiverId,
         data.content,
       );
+      console.log(`✅ Message saved: ${message._id}`);
 
       // Broadcast to everyone in the room (including sender)
       this.server.to(data.roomId).emit('new-message', message);
+      console.log(`📡 Broadcast new-message to room: ${data.roomId}`);
 
       // Also notify receiver in their personal room (for room list updates)
       const receiverSocketId = this.connectedUsers.get(data.receiverId);
@@ -122,6 +127,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.error('Failed to create notification:', e.message);
       }
     } catch (error) {
+      console.error(`❌ send-message FAILED:`, error.message, error.stack?.slice(0, 200));
       client.emit('message-error', { error: error.message || 'Failed to send message' });
     }
   }

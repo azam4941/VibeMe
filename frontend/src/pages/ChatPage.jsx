@@ -123,17 +123,36 @@ const ChatPage = () => {
     const handleNewMessage = (msg) => {
       console.log('📩 New message received:', msg);
       const msgRoomId = msg.roomId?.toString() || msg.roomId;
+      const msgSenderId = msg.senderId?._id || msg.senderId;
       
       if (msgRoomId === currentRoomRef.current) {
         setMessages(prev => {
+          // Skip if we already have this exact message
           const exists = prev.some(m => m._id === msg._id);
           if (exists) return prev;
+          
+          // If sender is current user, replace the optimistic temp message
+          if (msgSenderId === user._id) {
+            const hasOptimistic = prev.some(m => m._optimistic);
+            if (hasOptimistic) {
+              // Replace first optimistic msg with real one
+              let replaced = false;
+              return prev.map(m => {
+                if (m._optimistic && !replaced) {
+                  replaced = true;
+                  return msg;
+                }
+                return m;
+              });
+            }
+          }
+          
           return [...prev, msg];
         });
         scrollToBottom();
         
-        const receiverId = msg.receiverId?._id || msg.receiverId;
-        if (receiverId === user._id) {
+        // Mark as read if we received the message
+        if (msgSenderId !== user._id) {
           socketService.markRead(currentRoomRef.current, user._id);
         }
       }
