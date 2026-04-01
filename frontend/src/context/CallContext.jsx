@@ -104,6 +104,9 @@ export function CallProvider({ children }) {
   }, [user, stopMedia]);
 
   const getMediaStream = async (type) => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Camera/Microphone not supported on this browser (check secure domain/permissions).');
+    }
     const constraints = {
       audio: true,
       video: type === 'video' ? { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } : false,
@@ -194,14 +197,15 @@ export function CallProvider({ children }) {
       setCallState('calling');
 
       socketService.callUser({
-        to: callInfo.peerId,
-        from: user._id,
+        to: callInfo.peerId?.toString?.() || callInfo.peerId,
+        from: user._id?.toString?.() || user._id,
         offer: { type: offer.type, sdp: offer.sdp },
         type: callInfo.type,
         callerName: user.name || 'User',
       });
     } catch (err) {
       console.error('Failed to setup outgoing call:', err);
+      alert('Could not start call: ' + (err.message || 'Check camera/mic permissions'));
       fullReset();
     }
   }, [callInfo, user, createPeerConnection, fullReset]);
@@ -242,6 +246,7 @@ export function CallProvider({ children }) {
       setCallState('connecting');
     } catch (err) {
       console.error('Failed to accept call:', err);
+      alert('Could not join call: ' + (err.message || 'Check camera/mic permissions'));
       fullReset();
     }
   }, [incomingCall, user, createPeerConnection, navigate, fullReset]);
