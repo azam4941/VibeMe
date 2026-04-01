@@ -9,7 +9,8 @@ export default function Layout() {
   const { incomingCall, acceptIncoming, rejectIncoming } = useCall();
   const location = useLocation();
 
-  const hideNav = ['/session', '/rating', '/video-call'].some(p => location.pathname.startsWith(p));
+  const isChatRoom = /^\/chat\/.+/.test(location.pathname);
+  const hideNav = isChatRoom || ['/session', '/rating', '/video-call'].some(p => location.pathname.startsWith(p));
 
   const callerInitials = incomingCall?.callerName
     ? incomingCall.callerName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)

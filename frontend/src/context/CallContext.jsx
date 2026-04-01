@@ -172,11 +172,14 @@ export function CallProvider({ children }) {
     return pc;
   }, [user, stopMedia]);
 
-  // Navigate immediately, WebRTC setup happens on VideoCallPage mount
   const initiateCall = useCallback(async (peerId, peerName, type = 'video') => {
-    if (callStateRef.current !== 'idle') return;
+    if (callStateRef.current !== 'idle') {
+      throw new Error('A call is already in progress');
+    }
+    if (!socketService.isConnected()) {
+      throw new Error('Not connected to server. Please wait and try again.');
+    }
     callStateRef.current = 'requesting-media';
-
     setCallState('requesting-media');
     setCallInfo({ peerId, peerName, type, isInitiator: true });
     navigate('/video-call');

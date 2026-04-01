@@ -40,7 +40,6 @@ const ChatPage = () => {
   const activeRoomRef = useRef(null);
   const prevRoomIdRef = useRef(null);
   const roomsRef = useRef([]);
-  const consumedNavRoomRef = useRef(null);
   roomsRef.current = rooms;
 
   useEffect(() => { currentRoomRef.current = roomId; }, [roomId]);
@@ -92,61 +91,58 @@ const ChatPage = () => {
   };
 
   // ─── 2. SET ACTIVE ROOM ───
+  // Deps: only roomId + userId. NOT location.state (object ref changes break StrictMode).
   useEffect(() => {
     if (!roomId || !userId) return;
 
-    const isNewRoom = prevRoomIdRef.current !== roomId;
-    if (isNewRoom) {
+    if (prevRoomIdRef.current !== roomId) {
       setActiveRoom(null);
       setRoomError(null);
       prevRoomIdRef.current = roomId;
-      consumedNavRoomRef.current = null;
     }
 
     let cancelled = false;
+    const sameId = (a, b) => a != null && b != null && String(a) === String(b);
 
-    const eq = (a, b) => a != null && b != null && String(a) === String(b);
-
-    const applyRoom = (room) => {
-      if (cancelled) return;
-      setActiveRoom(room);
+    // Optimistically show room from navigation state (instant UI)
+    const navRoom = location.state?.room;
+    if (navRoom && sameId(navRoom._id ?? navRoom.id, roomId)) {
+      setActiveRoom(navRoom);
       setRoomError(null);
-      setRooms(prev => (prev.some(r => eq(r._id ?? r.id, roomId)) ? prev : [room, ...prev]));
-    };
+    }
 
-    const initRoom = async () => {
-      // 1. Use navigation state (passed from Discover / UserDetail)
-      const fromNav = location.state?.room;
-      if (fromNav && eq(fromNav._id ?? fromNav.id, roomId) && consumedNavRoomRef.current !== roomId) {
-        consumedNavRoomRef.current = roomId;
-        applyRoom(fromNav);
-        return;
-      }
-
-      // 2. Already loaded from rooms list
-      const found = roomsRef.current.find(r => eq(r._id ?? r.id, roomId));
-      if (found) {
-        if (!cancelled) { setActiveRoom(found); setRoomError(null); }
-        return;
-      }
-
-      // 3. Fetch from API with retry
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const room = await api.getChatRoom(roomId);
-          if (room) { applyRoom(room); return; }
-        } catch (err) {
-          console.error(`Failed to get chat room (attempt ${attempt + 1}):`, err);
-          if (attempt === 0) await new Promise(r => setTimeout(r, 800));
+    // Always fetch authoritative data from API (works in StrictMode, always correct)
+    api.getChatRoom(roomId)
+      .then(room => {
+        if (!cancelled && room) {
+          setActiveRoom(room);
+          setRoomError(null);
+          setRooms(prev => prev.some(r => sameId(r._id ?? r.id, roomId)) ? prev : [room, ...prev]);
         }
-      }
-      if (!cancelled) setRoomError('Could not load this conversation. Tap retry.');
-    };
-
-    initRoom();
+      })
+      .catch(async (err) => {
+        console.error('getChatRoom failed (attempt 1):', err.message);
+        // One retry after a short delay
+        try {
+          await new Promise(r => setTimeout(r, 1000));
+          if (cancelled) return;
+          const room = await api.getChatRoom(roomId);
+          if (!cancelled && room) {
+            setActiveRoom(room);
+            setRoomError(null);
+            setRooms(prev => prev.some(r => sameId(r._id ?? r.id, roomId)) ? prev : [room, ...prev]);
+          }
+        } catch (retryErr) {
+          console.error('getChatRoom failed (attempt 2):', retryErr.message);
+          // Only show error if we don't already have the room from nav state
+          if (!cancelled && !navRoom) {
+            setRoomError('Could not load this conversation. Tap retry.');
+          }
+        }
+      });
 
     return () => { cancelled = true; };
-  }, [roomId, userId, location.state]);
+  }, [roomId, userId]);
 
   // ─── 2b. JOIN SOCKET ROOM & FETCH MESSAGES ───
   useEffect(() => {
@@ -290,13 +286,7 @@ const ChatPage = () => {
       content: trimmed,
     };
 
-    const sent = socketService.sendMessage(msgData);
-    if (!sent) {
-      setSendError('Not connected. Retrying...');
-      setTimeout(() => setSendError(null), 3000);
-      return;
-    }
-
+    // Show message optimistically regardless of socket state
     const optimisticMsg = {
       _id: 'temp_' + Date.now(),
       senderId: { _id: userId, name: user?.name, profilePhoto: user?.profilePhoto },
@@ -311,6 +301,19 @@ const ChatPage = () => {
     scrollToBottom();
     setNewMessage('');
     handleStopTypingEmit();
+
+    const sent = socketService.sendMessage(msgData);
+    if (!sent) {
+      setSendError('Connecting... message will send when online.');
+      // Retry sending when socket reconnects
+      const retryInterval = setInterval(() => {
+        if (socketService.sendMessage(msgData)) {
+          clearInterval(retryInterval);
+          setSendError(null);
+        }
+      }, 2000);
+      setTimeout(() => { clearInterval(retryInterval); setSendError(null); }, 15000);
+    }
   }, [newMessage, userId, user?.name, user?.profilePhoto]);
 
   const handleInputChange = (e) => {
@@ -631,17 +634,16 @@ const ChatPage = () => {
               <form className="chat-input-area" onSubmit={handleSend}>
                 <input
                   type="text"
-                  placeholder={socketConnected ? 'Type a message...' : 'Connecting...'}
+                  placeholder="Type a message..."
                   value={newMessage}
                   onChange={handleInputChange}
                   className="message-input"
                   autoComplete="off"
-                  disabled={!socketConnected}
                 />
                 <button
                   type="submit"
-                  className={`btn-send ${!newMessage.trim() || !socketConnected ? 'disabled' : ''}`}
-                  disabled={!newMessage.trim() || !socketConnected}
+                  className={`btn-send ${!newMessage.trim() ? 'disabled' : ''}`}
+                  disabled={!newMessage.trim()}
                 >
                   <Send size={18} />
                 </button>
