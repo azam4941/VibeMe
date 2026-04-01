@@ -385,7 +385,9 @@ const ChatPage = () => {
     }
   };
 
-  if (loading) return <div className="loading-page"><div className="spinner" /></div>;
+  // Only show full-page loading spinner for the room list view (no roomId).
+  // When a specific room is open, skip the gate — activeRoom from nav state is enough.
+  if (loading && !roomId) return <div className="loading-page"><div className="spinner" /></div>;
 
   const isTyping = typingUsers.size > 0;
   const hasRequestedReveal = activeRoom?.revealRequests?.some(id => id?.toString() === userId?.toString());
