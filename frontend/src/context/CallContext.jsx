@@ -57,6 +57,9 @@ export function CallProvider({ children }) {
   useEffect(() => {
     if (!user?._id) return;
 
+    socketService.connect();
+    socketService.register(user._id);
+
     const handleIncoming = (data) => {
       if (callStateRef.current !== 'idle') {
         socketService.rejectCall({ to: data.from, from: user._id });
