@@ -15,6 +15,41 @@
 }
 .mp-verified-badge span { font-size: 12px; font-weight: 700; }
 
+.mp-location-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 3px;
+}
+
+.mp-bio {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: var(--navy2);
+  border-radius: 10px;
+  border: 1px solid var(--navy4);
+}
+
+.mp-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.mp-interest-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--purple-pale);
+  color: var(--purple-light);
+}
+
 .mp-stats-row { display: flex; gap: 8px; margin-top: 14px; }
 .mps {
   flex: 1; background: var(--navy2); border-radius: 10px; padding: 10px;

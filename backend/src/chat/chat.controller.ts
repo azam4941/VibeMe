@@ -18,6 +18,11 @@ export class ChatController {
     return this.chatService.getOrCreateRoom(req.user.userId, dto.userId);
   }
 
+  @Get('rooms/:roomId')
+  async getRoom(@Param('roomId') roomId: string, @Req() req) {
+    return this.chatService.getRoomById(roomId, req.user.userId);
+  }
+
   @Get('rooms/:roomId/messages')
   async getMessages(
     @Param('roomId') roomId: string,

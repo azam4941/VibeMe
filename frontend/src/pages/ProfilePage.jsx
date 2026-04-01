@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Wallet, Shield, BarChart3, Users, Settings, LogOut, ChevronRight, CheckCircle } from 'lucide-react';
+import {
+  User, Wallet, Shield, BarChart3, Users, Settings, LogOut,
+  ChevronRight, CheckCircle, MapPin, Star,
+} from 'lucide-react';
 import api from '../services/api';
 import './ProfilePage.css';
 
@@ -37,12 +40,12 @@ const ProfilePage = () => {
   };
 
   const menuItems = [
-    { icon: <User size={18} />, iconBg: '#EEEDFE', iconColor: '#534AB7', title: 'Edit Profile', sub: 'Name, bio, interests, photo', route: '/setup' },
-    { icon: <Wallet size={18} />, iconBg: '#E1F5EE', iconColor: '#1D9E75', title: 'Wallet & Payments', sub: `Balance: ₹${user?.balance || '0'}`, route: '/wallet' },
-    { icon: <Shield size={18} />, iconBg: '#FBEAF0', iconColor: '#D4537E', title: 'Privacy & Safety', sub: user?.isVerified ? 'Verified ✓' : 'KYC Pending', route: '/notifications' },
-    { icon: <BarChart3 size={18} />, iconBg: '#FAEEDA', iconColor: '#BA7517', title: 'Session History', sub: `${user?.totalSessions || 0} sessions completed`, route: '/bookings' },
-    { icon: <Users size={18} />, iconBg: '#EEEDFE', iconColor: '#534AB7', title: 'Refer & Earn', sub: 'Earn ₹50 per friend', route: '/notifications' },
-    { icon: <Settings size={18} />, iconBg: '#F1EFE8', iconColor: '#5F5E5A', title: 'Settings', sub: 'App preferences', route: '/notifications' },
+    { icon: <User size={18} />, iconBg: 'rgba(110,86,255,0.15)', iconColor: '#9B8CFF', title: 'Edit Profile', sub: 'Name, bio, interests, photo', route: '/setup' },
+    { icon: <Wallet size={18} />, iconBg: 'rgba(0,230,164,0.15)', iconColor: '#00E6A4', title: 'Wallet & Payments', sub: `Balance: ₹${user?.balance || '0'}`, route: '/wallet' },
+    { icon: <Shield size={18} />, iconBg: 'rgba(255,66,129,0.15)', iconColor: '#FF4281', title: 'Privacy & Safety', sub: user?.isVerified ? 'Verified' : 'KYC Pending', route: '/notifications' },
+    { icon: <BarChart3 size={18} />, iconBg: 'rgba(255,179,36,0.15)', iconColor: '#FFB324', title: 'Session History', sub: `${user?.totalSessions || 0} sessions completed`, route: '/bookings' },
+    { icon: <Users size={18} />, iconBg: 'rgba(110,86,255,0.15)', iconColor: '#9B8CFF', title: 'Refer & Earn', sub: 'Earn ₹50 per friend', route: '/notifications' },
+    { icon: <Settings size={18} />, iconBg: 'rgba(255,255,255,0.08)', iconColor: '#757599', title: 'Settings', sub: 'App preferences', route: '/notifications' },
   ];
 
   return (
@@ -53,9 +56,9 @@ const ProfilePage = () => {
           <span className="mp-edit" onClick={() => navigate('/setup')}>Edit</span>
         </div>
         <div className="mp-card">
-          <div className="mp-avatar avatar avatar-lg avatar-purple" 
-            style={{ 
-              borderRadius: '20px', 
+          <div className="mp-avatar avatar avatar-lg avatar-purple"
+            style={{
+              borderRadius: '20px',
               border: '3px solid var(--purple-light)',
               backgroundImage: user?.profilePhoto ? `url(${user.profilePhoto})` : 'none',
               backgroundSize: 'cover',
@@ -71,6 +74,12 @@ const ProfilePage = () => {
           <div className="mp-meta">
             <div className="mp-name">{user?.name || 'User'}</div>
             <div className="mp-phone">+91 {user?.phoneNumber || '—'}</div>
+            {user?.location && (
+              <div className="mp-location-row">
+                <MapPin size={10} />
+                <span>{user.location}</span>
+              </div>
+            )}
             {user?.isVerified && (
               <div className="mp-verified-badge">
                 <CheckCircle size={10} />
@@ -79,10 +88,38 @@ const ProfilePage = () => {
             )}
           </div>
         </div>
+
+        {user?.bio && (
+          <div className="mp-bio">{user.bio}</div>
+        )}
+
+        {user?.interests?.length > 0 && (
+          <div className="mp-interests">
+            {user.interests.slice(0, 5).map((int, i) => (
+              <span key={i} className="mp-interest-tag">{int}</span>
+            ))}
+            {user.interests.length > 5 && (
+              <span className="mp-interest-tag" style={{ opacity: 0.5 }}>+{user.interests.length - 5}</span>
+            )}
+          </div>
+        )}
+
         <div className="mp-stats-row">
-          <div className="mps"><div className="mps-num">{user?.totalSessions || 0}</div><div className="mps-label">Sessions</div></div>
-          <div className="mps"><div className="mps-num" style={{ color: 'var(--purple-mid)' }}>★ {user?.rating?.toFixed(1) || '—'}</div><div className="mps-label">My Rating</div></div>
-          <div className="mps"><div className="mps-num" style={{ color: 'var(--teal)' }}>₹{user?.totalEarnings || '0'}</div><div className="mps-label">Earnings</div></div>
+          <div className="mps">
+            <div className="mps-num">{user?.totalSessions || 0}</div>
+            <div className="mps-label">Sessions</div>
+          </div>
+          <div className="mps">
+            <div className="mps-num" style={{ color: 'var(--purple-mid)' }}>
+              <Star size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} />
+              {user?.rating?.toFixed(1) || '—'}
+            </div>
+            <div className="mps-label">My Rating</div>
+          </div>
+          <div className="mps">
+            <div className="mps-num" style={{ color: 'var(--teal)' }}>₹{user?.totalEarnings || '0'}</div>
+            <div className="mps-label">Earnings</div>
+          </div>
         </div>
       </div>
 
@@ -91,7 +128,7 @@ const ProfilePage = () => {
           <div className="mrb-row">
             <div className="mrb-left">
               <div className="mrb-title">Rent Mode — Earn Money</div>
-              <div className="mrb-sub">Currently: ₹{user?.pricePerMinute || 3}/min • {user?.rentMode ? '🟢 Active' : '🔴 Off'}</div>
+              <div className="mrb-sub">Currently: ₹{user?.pricePerMinute || 3}/min &bull; {user?.rentMode ? 'Active' : 'Off'}</div>
             </div>
             <div className={`toggle-switch ${!user?.rentMode ? 'off' : ''}`} onClick={handleToggleRent} style={{ opacity: toggling ? 0.5 : 1 }}>
               <div className="toggle-thumb" />
@@ -120,7 +157,7 @@ const ProfilePage = () => {
         </div>
 
         <div className="mp-signout card" onClick={handleLogout}>
-          <div className="mmi-icon" style={{ background: '#FCEBEB' }}><LogOut size={18} color="#E24B4A" /></div>
+          <div className="mmi-icon" style={{ background: 'rgba(255,59,93,0.12)' }}><LogOut size={18} color="var(--red)" /></div>
           <div className="mmi-text"><div className="mmi-title" style={{ color: 'var(--red)' }}>Sign Out</div></div>
         </div>
       </div>

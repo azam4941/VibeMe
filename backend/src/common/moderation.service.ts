@@ -6,12 +6,8 @@ export class ModerationService {
 
   // Sensitive keywords for moderation (Example: detecting abuse, adult content, escort services)
   private readonly forbiddenKeywords = [
-    // Abuse/Harassment
-    'abuse', 'harass', 'stupid', 'idiot', 'moron', 'hate', 
-    // Adult/Escort content (misuse prevention)
-    'sex', 'adult', 'escort', 'porn', 'xxx', 'hookup', 'nude', 'naked', 'call girl', 'gigolo', 'sexual',
-    // Scams/Spam
-    'scam', 'fraud', 'crypto', 'investment', 'money hack'
+    'escort', 'porn', 'xxx', 'nude', 'naked', 'call girl', 'gigolo',
+    'money hack',
   ];
 
   /**

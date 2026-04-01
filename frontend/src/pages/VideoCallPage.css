@@ -1,97 +1,244 @@
-/* VideoCallPage.css — VibeMe (Dark Theme) */
-.video-call-page {
-  min-height: 100vh;
+/* VideoCallPage.css — Native WebRTC Call UI */
+.vc-page {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: #0a0a1a;
   display: flex;
   flex-direction: column;
-  background: var(--navy);
+  overflow: hidden;
+}
+.vc-page.vc-ending {
+  opacity: 0.7;
+  transition: opacity 0.5s;
 }
 
-.vc-header {
+/* Remote video fills the screen */
+.vc-remote-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Fallback when no remote video */
+.vc-no-video-bg {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #0c0c22 0%, #1a0a3e 60%, #090914 100%);
+  position: relative;
+}
+
+.vc-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6E56FF 0%, #9B8CFF 100%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: calc(12px + var(--safe-top, 0px)) 16px 12px;
-  background: var(--navy2);
-  border-bottom: 1px solid var(--border);
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 0 60px rgba(110, 86, 255, 0.5);
+  margin-bottom: 20px;
+  font-family: var(--font-display);
+}
+
+.vc-peer-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.vc-status-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--font-display);
+  letter-spacing: 0.5px;
+}
+
+.vc-duration {
+  font-variant-numeric: tabular-nums;
+  color: var(--teal);
+  font-weight: 600;
+}
+
+/* Calling pulse animation */
+.vc-pulse-ring {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 2px solid rgba(110, 86, 255, 0.4);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, calc(-50% - 40px));
+  animation: vcPulse 2s ease-out infinite;
+}
+@keyframes vcPulse {
+  0% { transform: translate(-50%, calc(-50% - 40px)) scale(1); opacity: 0.8; }
+  100% { transform: translate(-50%, calc(-50% - 40px)) scale(1.6); opacity: 0; }
+}
+
+/* Top bar on active video call */
+.vc-top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: calc(16px + var(--safe-top, 0px)) 20px 16px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+  z-index: 5;
+}
+
+.vc-top-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vc-top-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.vc-top-duration {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--teal);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Local PiP (picture-in-picture) */
+.vc-local-pip {
+  position: absolute;
+  top: calc(20px + var(--safe-top, 0px));
+  right: 16px;
+  width: 120px;
+  height: 160px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  z-index: 10;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.vc-local-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.vc-local-cam-off {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+/* End overlay */
+.vc-end-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 20;
+  color: #fff;
+  gap: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+.vc-end-text {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.vc-end-subtext {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-body);
+}
+
+/* Controls bar */
+.vc-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 20px calc(24px + var(--safe-bottom, 0px));
+  background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
   z-index: 10;
 }
 
-.vc-back {
-  background: none;
-  border: none;
-  color: var(--purple-mid);
-  cursor: pointer;
-  padding: 4px;
+.vc-ctrl {
   display: flex;
+  flex-direction: column;
   align-items: center;
-}
-
-.vc-title {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  border-radius: 16px;
+  padding: 14px 18px;
   color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.vc-frame-container {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-}
-
-.vc-jitsi-container {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-}
-
-.vc-jitsi-container iframe {
-  width: 100% !important;
-  height: 100% !important;
-  border: none !important;
-}
-
-.vc-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  position: absolute;
-  top: 0; left: 0;
-}
-
-.vc-loading {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-}
-
-.vc-footer {
-  display: flex;
-  justify-content: center;
-  padding: 12px 16px calc(12px + var(--safe-bottom, 0px));
-  background: var(--navy2);
-  border-top: 1px solid var(--border);
-}
-
-.vc-end-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--red);
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  padding: 12px 32px;
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
+  backdrop-filter: blur(8px);
+  min-width: 70px;
 }
-.vc-end-btn:hover { filter: brightness(1.1); }
-.vc-end-btn:active { transform: scale(0.95); }
+
+.vc-ctrl span {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  opacity: 0.8;
+}
+
+.vc-ctrl:hover { background: rgba(255, 255, 255, 0.2); }
+.vc-ctrl:active { transform: scale(0.93); }
+.vc-ctrl:disabled { opacity: 0.4; pointer-events: none; }
+
+.vc-ctrl-active {
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--amber);
+}
+
+.vc-ctrl-end {
+  background: var(--red) !important;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  min-width: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vc-ctrl-end span { display: none; }
+.vc-ctrl-end:hover { filter: brightness(1.15); }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

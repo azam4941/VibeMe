@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCall } from '../context/CallContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Send, Users, ChevronLeft, UserCircle2, Info, 
-  Check, CheckCheck, Eye, ShieldAlert, Image as ImageIcon,
+import {
+  Send, ChevronLeft, UserCircle2, Info,
+  Check, CheckCheck, Eye, ShieldAlert,
   Flag, Ban, MoreVertical, MessageSquare, Wifi, WifiOff,
-  Phone, Video
+  Phone, Video, RefreshCw, AlertTriangle,
 } from 'lucide-react';
 import './ChatPage.css';
 import api from '../services/api';
@@ -15,48 +16,55 @@ import socketService from '../services/socket';
 const ChatPage = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
-  
+  const { initiateCall } = useCall();
+  const userId = user?._id;
+
   const [rooms, setRooms] = useState([]);
   const [activeRoom, setActiveRoom] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [sendError, setSendError] = useState(null);
+  const [roomError, setRoomError] = useState(null);
   const [typingUsers, setTypingUsers] = useState(new Set());
   const [showSafetyMenu, setShowSafetyMenu] = useState(false);
-  const [socketConnected, setSocketConnected] = useState(false);
-  const [showVoiceCall, setShowVoiceCall] = useState(false);
-  const [voiceCallDuration, setVoiceCallDuration] = useState(0);
-  const [voiceCallState, setVoiceCallState] = useState('idle'); // idle | calling | active | ended
-  const voiceTimerRef = useRef(null);
-  
+  const [socketConnected, setSocketConnected] = useState(socketService.isConnected());
+  const [fetchError, setFetchError] = useState(null);
+
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const currentRoomRef = useRef(roomId);
+  const activeRoomRef = useRef(null);
+  const prevRoomIdRef = useRef(null);
+  const roomsRef = useRef([]);
+  const consumedNavRoomRef = useRef(null);
+  roomsRef.current = rooms;
 
-  // Keep room ref in sync
-  useEffect(() => {
-    currentRoomRef.current = roomId;
-  }, [roomId]);
+  useEffect(() => { currentRoomRef.current = roomId; }, [roomId]);
+  useEffect(() => { activeRoomRef.current = activeRoom; }, [activeRoom]);
 
-  // ─── 0. CONNECT SOCKET ON MOUNT ───
+  // ─── 0. CONNECT SOCKET & REGISTER USER ───
   useEffect(() => {
-    console.log('🚀 ChatPage: Initializing socket connection...');
     const sock = socketService.connect();
-    
+
     const onConnect = () => {
-      console.log('✅ ChatPage: Socket is connected!');
       setSocketConnected(true);
+      if (userId) socketService.register(userId);
+      if (currentRoomRef.current) socketService.joinRoom(currentRoomRef.current);
     };
-    const onDisconnect = () => {
-      console.log('❌ ChatPage: Socket disconnected');
-      setSocketConnected(false);
-    };
+
+    const onDisconnect = () => setSocketConnected(false);
 
     if (sock) {
       sock.on('connect', onConnect);
       sock.on('disconnect', onDisconnect);
-      if (sock.connected) setSocketConnected(true);
+      if (sock.connected) {
+        setSocketConnected(true);
+        if (userId) socketService.register(userId);
+      }
     }
 
     return () => {
@@ -65,544 +73,572 @@ const ChatPage = () => {
         sock.off('disconnect', onDisconnect);
       }
     };
-  }, []);
+  }, [userId]);
 
   // ─── 1. FETCH ROOMS ───
-  useEffect(() => {
-    fetchRooms();
-  }, []);
+  useEffect(() => { fetchRooms(); }, []);
 
   const fetchRooms = async () => {
+    setFetchError(null);
     try {
       const data = await api.getChatRooms();
       setRooms(data || []);
     } catch (err) {
       console.error('Failed to load chats:', err);
+      setFetchError('Could not load conversations. Check your connection.');
     } finally {
       setLoading(false);
     }
   };
 
-  // ─── 2. SET ACTIVE ROOM & JOIN SOCKET ───
+  // ─── 2. SET ACTIVE ROOM ───
   useEffect(() => {
-    if (!roomId || !user?._id) return;
-    
-    const room = rooms.find(r => r._id === roomId);
-    if (room) setActiveRoom(room);
-    
-    fetchMessages(roomId);
-    
-    console.log('📌 Joining room:', roomId);
-    socketService.joinRoom(roomId);
-    
-    api.markAsRead(roomId).catch(console.error);
-    socketService.markRead(roomId, user._id);
+    if (!roomId || !userId) return;
 
-    return () => {
-      if (roomId) {
-        console.log('📤 Leaving room:', roomId);
-        socketService.leaveRoom(roomId);
+    if (prevRoomIdRef.current !== roomId) {
+      setActiveRoom(null);
+      setRoomError(null);
+      prevRoomIdRef.current = roomId;
+      consumedNavRoomRef.current = null;
+    }
+
+    let cancelled = false;
+
+    const eq = (a, b) => a != null && b != null && String(a) === String(b);
+
+    const initRoom = async () => {
+      // Use navigation state (passed from Discover / UserDetail)
+      const fromNav = location.state?.room;
+      if (fromNav && eq(fromNav._id ?? fromNav.id, roomId) && consumedNavRoomRef.current !== roomId) {
+        consumedNavRoomRef.current = roomId;
+        if (!cancelled) {
+          setActiveRoom(fromNav);
+          setRoomError(null);
+          setRooms(prev => (prev.some(r => eq(r._id ?? r.id, roomId)) ? prev : [fromNav, ...prev]));
+        }
+        return;
+      }
+
+      // Already loaded from rooms list
+      const list = roomsRef.current;
+      const found = list.find(r => eq(r._id ?? r.id, roomId));
+      if (found) {
+        if (!cancelled) { setActiveRoom(found); setRoomError(null); }
+        return;
+      }
+
+      // Fetch from API
+      try {
+        const room = await api.getChatRoom(roomId);
+        if (!cancelled && room) {
+          setActiveRoom(room);
+          setRoomError(null);
+          setRooms(prev => (prev.some(r => eq(r._id ?? r.id, roomId)) ? prev : [room, ...prev]));
+        }
+      } catch (err) {
+        console.error('Failed to get chat room:', err);
+        if (!cancelled) setRoomError('Could not load this conversation.');
       }
     };
-  }, [roomId, rooms, user]);
+
+    initRoom();
+
+    return () => { cancelled = true; };
+  }, [roomId, userId, location.state]);
+
+  // ─── 2b. JOIN SOCKET ROOM & FETCH MESSAGES ───
+  useEffect(() => {
+    if (!roomId || !userId) return;
+
+    fetchMessages(roomId);
+    socketService.joinRoom(roomId);
+    api.markAsRead(roomId).catch(() => {});
+    socketService.markRead(roomId, userId);
+
+    return () => {
+      socketService.leaveRoom(roomId);
+      setMessages([]);
+    };
+  }, [roomId, userId]);
 
   const fetchMessages = async (id) => {
+    setMessagesLoading(true);
     try {
       const msgs = await api.getMessages(id, 100);
       setMessages((msgs || []).reverse());
       scrollToBottom();
     } catch (err) {
       console.error('Failed to load messages:', err);
+    } finally {
+      setMessagesLoading(false);
     }
   };
 
   // ─── 3. SOCKET EVENT LISTENERS ───
   useEffect(() => {
-    if (!user?._id) return;
+    if (!userId) return;
 
     const handleNewMessage = (msg) => {
-      console.log('📩 New message received:', msg);
-      const msgRoomId = msg.roomId?.toString() || msg.roomId;
-      const msgSenderId = msg.senderId?._id || msg.senderId;
-      
+      const msgRoomId = typeof msg.roomId === 'object' ? msg.roomId?.toString() : msg.roomId;
+      const msgSenderId = msg.senderId?._id?.toString() || msg.senderId?._id || msg.senderId?.toString?.() || msg.senderId;
+
       if (msgRoomId === currentRoomRef.current) {
         setMessages(prev => {
-          // Skip if we already have this exact message
-          const exists = prev.some(m => m._id === msg._id);
+          const exists = prev.some(m => m._id?.toString() === msg._id?.toString());
           if (exists) return prev;
-          
-          // If sender is current user, replace the optimistic temp message
-          if (msgSenderId === user._id) {
-            const hasOptimistic = prev.some(m => m._optimistic);
-            if (hasOptimistic) {
-              // Replace first optimistic msg with real one
-              let replaced = false;
-              return prev.map(m => {
-                if (m._optimistic && !replaced) {
-                  replaced = true;
-                  return msg;
-                }
-                return m;
-              });
-            }
+
+          if (msgSenderId?.toString() === userId?.toString()) {
+            let replaced = false;
+            const updated = prev.map(m => {
+              if (m._optimistic && !replaced) { replaced = true; return msg; }
+              return m;
+            });
+            if (replaced) return updated;
           }
-          
+
           return [...prev, msg];
         });
         scrollToBottom();
-        
-        // Mark as read if we received the message
-        if (msgSenderId !== user._id) {
-          socketService.markRead(currentRoomRef.current, user._id);
+
+        if (msgSenderId?.toString() !== userId?.toString()) {
+          socketService.markRead(currentRoomRef.current, userId);
         }
       }
-      
-      // Update room list
-      setRooms(prev => prev.map(r => 
-        r._id === msgRoomId 
-          ? { ...r, lastMessage: msg.message, lastMessageAt: msg.timestamp || msg.createdAt } 
+
+      setRooms(prev => prev.map(r =>
+        r._id === msgRoomId
+          ? { ...r, lastMessage: msg.message, lastMessageAt: msg.timestamp || msg.createdAt }
           : r
-      ).sort((a,b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)));
+      ).sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)));
     };
 
     const handleTyping = ({ userId: typingUserId }) => {
-      if (typingUserId === user._id) return;
-      setTypingUsers(prev => {
-        const next = new Set(prev);
-        next.add(typingUserId);
-        return next;
-      });
+      if (typingUserId === userId) return;
+      setTypingUsers(prev => { const n = new Set(prev); n.add(typingUserId); return n; });
     };
 
     const handleStopTyping = ({ userId: typingUserId }) => {
-      setTypingUsers(prev => {
-        const next = new Set(prev);
-        next.delete(typingUserId);
-        return next;
-      });
+      setTypingUsers(prev => { const n = new Set(prev); n.delete(typingUserId); return n; });
     };
 
     const handleMessagesRead = ({ roomId: readRoomId, userId: readerId }) => {
-      if (readRoomId === currentRoomRef.current && readerId !== user._id) {
+      if (readRoomId === currentRoomRef.current && readerId !== userId) {
         setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
       }
     };
 
     const handleMessageError = ({ error }) => {
-      console.error('❌ Message failed:', error);
-      alert('Message failed: ' + error);
+      setMessages(prev => {
+        const idx = prev.map(m => m._optimistic).lastIndexOf(true);
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated.splice(idx, 1);
+          return updated;
+        }
+        return prev;
+      });
+      setSendError(error);
+      setTimeout(() => setSendError(null), 4000);
     };
 
-    const handleMessageSent = (data) => {
-      console.log('✅ Message confirmed sent:', data);
-    };
-
-    // Register all listeners
     socketService.onNewMessage(handleNewMessage);
+    socketService._on('room-joined', () => {});
     socketService.onUserTyping(handleTyping);
     socketService.onUserStopTyping(handleStopTyping);
     socketService.onMessagesRead(handleMessagesRead);
     socketService.onMessageError(handleMessageError);
-    socketService.onMessageSent(handleMessageSent);
+    socketService.onMessageSent(() => {});
 
     return () => {
       socketService._off('new-message', handleNewMessage);
+      socketService._off('room-joined');
       socketService._off('user-typing', handleTyping);
       socketService._off('user-stop-typing', handleStopTyping);
       socketService._off('messages-read', handleMessagesRead);
       socketService._off('message-error', handleMessageError);
-      socketService._off('message-sent', handleMessageSent);
+      socketService._off('message-sent');
     };
-  }, [user]);
+  }, [userId]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 150);
+    }, 100);
   };
 
   // ─── SEND MESSAGE ───
   const handleSend = useCallback((e) => {
     e?.preventDefault();
-    if (!newMessage.trim() || !activeRoom || !user?._id) return;
+    const trimmed = newMessage.trim();
+    if (!trimmed || !activeRoomRef.current || !userId) return;
+    setSendError(null);
 
-    const otherUser = activeRoom.participants.find(p => p._id !== user._id);
+    const room = activeRoomRef.current;
+    const otherUser = room.participants?.find(p => {
+      const pid = p._id?.toString() || p._id;
+      return pid !== userId?.toString();
+    });
+
     if (!otherUser) return;
-    
+
     const msgData = {
-      roomId,
-      senderId: user._id,
-      receiverId: otherUser._id,
-      content: newMessage.trim(),
+      roomId: currentRoomRef.current,
+      senderId: userId,
+      receiverId: otherUser._id?.toString() || otherUser._id,
+      content: trimmed,
     };
 
-    console.log('📤 Sending message:', msgData);
-    socketService.sendMessage(msgData);
+    const sent = socketService.sendMessage(msgData);
+    if (!sent) {
+      setSendError('Not connected. Retrying...');
+      setTimeout(() => setSendError(null), 3000);
+      return;
+    }
 
-    // Optimistic update — add to local messages immediately
     const optimisticMsg = {
       _id: 'temp_' + Date.now(),
-      senderId: { _id: user._id, name: user.name },
+      senderId: { _id: userId, name: user?.name, profilePhoto: user?.profilePhoto },
       receiverId: otherUser._id,
-      roomId: roomId,
-      message: newMessage.trim(),
+      roomId: currentRoomRef.current,
+      message: trimmed,
       timestamp: new Date().toISOString(),
       isRead: false,
       _optimistic: true,
     };
     setMessages(prev => [...prev, optimisticMsg]);
     scrollToBottom();
-
     setNewMessage('');
     handleStopTypingEmit();
-  }, [newMessage, activeRoom, user, roomId]);
+  }, [newMessage, userId, user?.name, user?.profilePhoto]);
 
-  // ─── TYPING ───
   const handleInputChange = (e) => {
     setNewMessage(e.target.value);
-    
-    if (!roomId || !user?._id) return;
-    socketService.emitTyping(roomId, user._id);
-    
+    if (!roomId || !userId) return;
+    socketService.emitTyping(roomId, userId);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      handleStopTypingEmit();
-    }, 2000);
+    typingTimeoutRef.current = setTimeout(handleStopTypingEmit, 2000);
   };
 
   const handleStopTypingEmit = () => {
-    if (!roomId || !user?._id) return;
-    socketService.emitStopTyping(roomId, user._id);
+    if (!roomId || !userId) return;
+    socketService.emitStopTyping(roomId, userId);
   };
 
   const requestReveal = async () => {
     try {
       const updated = await api.requestReveal(roomId);
       setActiveRoom(updated);
-      alert('Identity reveal requested. When both parties request, identities will be shown.');
     } catch (e) {
-      alert(e.message || 'Failed to request reveal');
+      setSendError(e.message || 'Failed to request reveal');
+      setTimeout(() => setSendError(null), 3000);
     }
   };
 
   const handleBlockRoom = async () => {
-    if (!window.confirm('Are you sure you want to block this conversation?')) return;
+    if (!window.confirm('Block this conversation?')) return;
     try {
       await api.blockChatRoom(roomId);
-      alert('Conversation blocked.');
       navigate('/chat');
       fetchRooms();
     } catch (err) {
-      alert('Failed to block conversation: ' + err.message);
+      setSendError('Failed to block: ' + err.message);
     }
   };
 
-  const otherUser = activeRoom?.participants?.find(p => p._id !== user?._id);
+  const otherUser = activeRoom?.participants?.find(p => {
+    const pid = p._id?.toString() || p._id;
+    return pid !== userId?.toString() && pid !== userId;
+  });
 
   const handleReportInChat = async () => {
-    const reason = window.prompt('Please provide a reason for reporting this user:');
+    const reason = window.prompt('Reason for reporting this user:');
     if (!reason) return;
     try {
-      await api.createReport({
-        reportedUserId: otherUser?._id,
-        reason: reason,
-        details: 'User reported from chat room'
-      });
-      alert('Report submitted successfully.');
+      await api.createReport({ reportedUserId: otherUser?._id, reason, details: 'Reported from chat' });
+      setSendError(null);
     } catch (err) {
-      alert('Failed to submit report: ' + err.message);
+      setSendError('Failed to submit report: ' + err.message);
+    }
+  };
+
+  const isAnonymous = activeRoom?.isAnonymous;
+
+  const handleVoiceCall = async () => {
+    if (!otherUser?._id) return;
+    try {
+      await initiateCall(otherUser._id, isAnonymous ? 'Anonymous User' : otherUser.name, 'voice');
+    } catch (err) {
+      setSendError('Could not start voice call. Check mic permissions.');
+      setTimeout(() => setSendError(null), 4000);
+    }
+  };
+
+  const handleVideoCall = async () => {
+    if (!otherUser?._id) return;
+    try {
+      await initiateCall(otherUser._id, isAnonymous ? 'Anonymous User' : otherUser.name, 'video');
+    } catch (err) {
+      setSendError('Could not start video call. Check camera/mic permissions.');
+      setTimeout(() => setSendError(null), 4000);
     }
   };
 
   if (loading) return <div className="loading-page"><div className="spinner" /></div>;
 
-  const isAnonymous = activeRoom?.isAnonymous;
-  const isTyping = Array.from(typingUsers).some(id => id !== user?._id);
-  const hasRequestedReveal = activeRoom?.revealRequests?.includes(user?._id);
+  const isTyping = typingUsers.size > 0;
+  const hasRequestedReveal = activeRoom?.revealRequests?.some(id => id?.toString() === userId?.toString());
 
   const formatTime = (ts) => {
     if (!ts) return '';
-    const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  // activeRoom takes priority — if we loaded the room, ignore any stale roomError
+  const showError = roomError && !activeRoom;
 
   return (
     <div className="chat-container">
-      {/* Sidebar List */}
+      {/* Sidebar */}
       {!roomId && (
         <div className="chat-sidebar glass">
-        <div className="sidebar-header">
-          <h2>Messages</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {socketConnected 
-              ? <Wifi size={14} color="var(--teal)" />
-              : <WifiOff size={14} color="var(--red)" />
-            }
-            <span className="badge badge-accent">{rooms.length}</span>
-          </div>
-        </div>
-        
-        <div className="rooms-list">
-          {rooms.length === 0 ? (
-            <div className="empty-rooms text-muted text-center pt-24 text-sm">
-              <MessageSquare size={32} opacity={0.3} className="mx-auto mb-12" />
-              <p>No conversations yet.</p>
-              <p>Browse people and start chatting!</p>
+          <div className="sidebar-header">
+            <h2>Messages</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {socketConnected
+                ? <Wifi size={14} color="var(--teal)" />
+                : <WifiOff size={14} color="var(--red)" />
+              }
+              <span className="badge badge-accent">{rooms.length}</span>
             </div>
-          ) : (
-            rooms.map(room => {
-              const partner = room.participants.find(p => p._id !== user?._id);
-              const isActive = room._id === roomId;
-              const displayName = room.isAnonymous ? 'Anonymous User' : (partner?.name || 'User');
-              const displayPhoto = room.isAnonymous 
-                ? `https://api.dicebear.com/7.x/bottts/svg?seed=${partner?._id}`
-                : (partner?.profilePhoto || `https://avatar.iran.liara.run/public?username=${partner?.name}`);
+          </div>
 
-              return (
-                <div 
-                  key={room._id} 
-                  className={`room-item ${isActive ? 'active' : ''}`}
-                  onClick={() => navigate(`/chat/${room._id}`)}
-                >
-                  <img src={displayPhoto} alt={displayName} className="room-avatar" />
-                  <div className="room-info">
-                    <div className="room-top">
-                      <span className="room-name">{displayName}</span>
-                      {room.lastMessageAt && (
-                        <span className="room-time">{formatTime(room.lastMessageAt)}</span>
-                      )}
-                    </div>
-                    <div className="room-bottom">
-                      <p className="room-preview line-clamp-1 text-sm text-muted">
-                        {room.lastMessage || 'No messages yet'}
-                      </p>
+          {!socketConnected && (
+            <div className="reconnecting-bar">
+              <RefreshCw size={12} className="spin-icon" /> Reconnecting...
+            </div>
+          )}
+
+          {fetchError && (
+            <div className="chat-error-bar">
+              <AlertTriangle size={14} />
+              <span>{fetchError}</span>
+              <button onClick={fetchRooms} className="retry-btn">Retry</button>
+            </div>
+          )}
+
+          <div className="rooms-list">
+            {rooms.length === 0 && !fetchError ? (
+              <div className="empty-rooms text-muted text-center pt-24 text-sm">
+                <MessageSquare size={32} opacity={0.3} className="mx-auto mb-12" />
+                <p>No conversations yet.</p>
+                <p>Browse people and start chatting!</p>
+              </div>
+            ) : (
+              rooms.map(room => {
+                const partner = room.participants?.find(p => p._id?.toString() !== userId?.toString());
+                const isActive = room._id === roomId;
+                const displayName = room.isAnonymous ? 'Anonymous User' : (partner?.name || 'User');
+                const displayPhoto = room.isAnonymous
+                  ? `https://api.dicebear.com/7.x/bottts/svg?seed=${partner?._id}`
+                  : (partner?.profilePhoto || `https://avatar.iran.liara.run/public?username=${partner?.name}`);
+
+                return (
+                  <div
+                    key={room._id}
+                    className={`room-item ${isActive ? 'active' : ''}`}
+                    onClick={() => navigate(`/chat/${room._id}`)}
+                  >
+                    <img src={displayPhoto} alt={displayName} className="room-avatar" />
+                    <div className="room-info">
+                      <div className="room-top">
+                        <span className="room-name">{displayName}</span>
+                        {room.lastMessageAt && (
+                          <span className="room-time">{formatTime(room.lastMessageAt)}</span>
+                        )}
+                      </div>
+                      <div className="room-bottom">
+                        <p className="room-preview line-clamp-1 text-sm text-muted">
+                          {room.lastMessage || 'No messages yet'}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Main Chat Area */}
       {roomId && (
         <div className="chat-main">
-        {!activeRoom ? (
-          <div className="chat-placeholder">
-            <div className="glass empty-chat-card">
-              <div className="spinner" style={{ margin: '0 auto 16px' }} />
-              <h3>Loading conversation...</h3>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Chat Header */}
-            <div className="chat-header glass">
-              <button className="mobile-back-btn" onClick={() => navigate('/chat')}>
-                <ChevronLeft size={24} />
-              </button>
-              
-              <div className="chat-partner-info">
-                <img 
-                  src={isAnonymous ? `https://api.dicebear.com/7.x/bottts/svg?seed=${otherUser?._id}` : (otherUser?.profilePhoto || `https://avatar.iran.liara.run/public?username=${otherUser?.name}`)} 
-                  alt="Partner" 
-                  className="avatar flex-shrink-0"
-                />
-                <div>
-                  <h3 className="partner-name">
-                    {isAnonymous ? 'Anonymous User' : otherUser?.name}
-                    {isAnonymous && <ShieldAlert size={14} className="ml-8 text-accent inline" />}
-                  </h3>
-                  {isTyping && <span className="typing-indicator">typing...</span>}
-                  {!isTyping && (
-                    <span className="typing-indicator" style={{ color: socketConnected ? 'var(--teal)' : 'var(--red)', fontStyle: 'normal', fontSize: '9px' }}>
-                      {socketConnected ? '● Online' : '● Connecting...'}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="header-actions">
-                {/* Voice Call Button */}
-                <button
-                  className="btn btn-icon btn-sm"
-                  title="Voice Call"
-                  onClick={() => {
-                    setShowVoiceCall(true);
-                    setVoiceCallState('calling');
-                    setVoiceCallDuration(0);
-                    setTimeout(() => {
-                      setVoiceCallState('active');
-                      voiceTimerRef.current = setInterval(() => {
-                        setVoiceCallDuration(prev => prev + 1);
-                      }, 1000);
-                    }, 2000);
-                  }}
-                >
-                  <Phone size={16} />
-                </button>
-
-                {/* Video Call Button */}
-                <button
-                  className="btn btn-icon btn-sm"
-                  title="Video Call"
-                  onClick={() => {
-                    const partnerName = isAnonymous ? 'Anonymous User' : (otherUser?.name || 'User');
-                    navigate('/video-call', {
-                      state: {
-                        url: `https://meet.jit.si/vibeme_${user?._id}_${otherUser?._id}_${Date.now()}`,
-                        partnerName,
-                      }
-                    });
-                  }}
-                >
-                  <Video size={16} />
-                </button>
-
-                {isAnonymous && (
-                  <button 
-                    className={`btn btn-sm ${hasRequestedReveal ? 'btn-success' : 'btn-outline'}`}
-                    onClick={requestReveal}
-                    disabled={hasRequestedReveal}
-                  >
-                    <Eye size={14} /> 
-                    {hasRequestedReveal ? 'Requested' : 'Reveal'}
-                  </button>
-                )}
-                {!isAnonymous && (
-                  <button className="btn btn-sm btn-secondary" onClick={() => navigate(`/user/${otherUser?._id}`)}>
-                    <UserCircle2 size={16} /> Profile
-                  </button>
-                )}
-
-                <div className="relative safety-menu-container">
-                  <button 
-                    className="btn btn-icon btn-sm" 
-                    onClick={() => setShowSafetyMenu(!showSafetyMenu)}
-                  >
-                    <MoreVertical size={18} />
-                  </button>
-                  
-                  {showSafetyMenu && (
-                    <div className="safety-dropdown glass" onMouseLeave={() => setShowSafetyMenu(false)}>
-                      <button className="dropdown-item" onClick={handleReportInChat}>
-                        <Flag size={14} /> Report User
-                      </button>
-                      <button className="dropdown-item danger" onClick={handleBlockRoom}>
-                        <Ban size={14} /> Block Chat
-                      </button>
-                    </div>
-                  )}
-                </div>
+          {showError ? (
+            <div className="chat-placeholder">
+              <div className="glass empty-chat-card">
+                <AlertTriangle size={32} style={{ margin: '0 auto 16px', color: 'var(--red)' }} />
+                <h3>{roomError}</h3>
+                <button className="btn btn-sm btn-secondary" style={{ marginTop: 12 }} onClick={() => navigate('/chat')}>Go Back</button>
               </div>
             </div>
-
-            {/* Warning Banner */}
-            {isAnonymous && (
-              <div className="anonymous-banner">
-                <Info size={16} />
-                <span>This chat is anonymous. Identities are hidden until both users agree to reveal them.</span>
+          ) : !activeRoom ? (
+            <div className="chat-placeholder">
+              <div className="glass empty-chat-card">
+                <div className="spinner" style={{ margin: '0 auto 16px' }} />
+                <h3>Loading conversation...</h3>
               </div>
-            )}
+            </div>
+          ) : (
+            <>
+              {/* Chat Header */}
+              <div className="chat-header glass">
+                <button className="mobile-back-btn" onClick={() => navigate('/chat')}>
+                  <ChevronLeft size={24} />
+                </button>
 
-            {/* Messages Area */}
-            <div className="messages-area">
-              <AnimatePresence>
-                {messages.map((msg, index) => {
-                  const senderId = msg.senderId?._id || msg.senderId;
-                  const isMine = senderId === user?._id;
-                  
-                  return (
-                    <motion.div 
-                      key={msg._id || index}
-                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      className={`message-wrapper ${isMine ? 'mine' : 'theirs'}`}
+                <div className="chat-partner-info">
+                  <img
+                    src={isAnonymous
+                      ? `https://api.dicebear.com/7.x/bottts/svg?seed=${otherUser?._id}`
+                      : (otherUser?.profilePhoto || `https://avatar.iran.liara.run/public?username=${otherUser?.name}`)}
+                    alt="Partner"
+                    className="avatar flex-shrink-0"
+                  />
+                  <div>
+                    <h3 className="partner-name">
+                      {isAnonymous ? 'Anonymous User' : otherUser?.name}
+                      {isAnonymous && <ShieldAlert size={14} className="ml-8 text-accent inline" />}
+                    </h3>
+                    {isTyping
+                      ? <span className="typing-indicator">typing...</span>
+                      : <span className="typing-indicator" style={{ color: socketConnected ? 'var(--teal)' : 'var(--red)', fontStyle: 'normal', fontSize: '9px' }}>
+                          {socketConnected ? '● Online' : '● Connecting...'}
+                        </span>
+                    }
+                  </div>
+                </div>
+
+                <div className="header-actions">
+                  <button className="btn btn-icon btn-sm" title="Voice Call" onClick={handleVoiceCall}>
+                    <Phone size={16} />
+                  </button>
+                  <button className="btn btn-icon btn-sm" title="Video Call" onClick={handleVideoCall}>
+                    <Video size={16} />
+                  </button>
+
+                  {isAnonymous && (
+                    <button
+                      className={`btn btn-sm ${hasRequestedReveal ? 'btn-success' : 'btn-outline'}`}
+                      onClick={requestReveal}
+                      disabled={hasRequestedReveal}
                     >
-                      <div className="message-bubble">
-                        <p>{msg.message}</p>
-                        <div className="message-meta">
-                          <span className="time">{formatTime(msg.timestamp || msg.createdAt)}</span>
-                          {isMine && (
-                            <span className="status">
-                              {msg._optimistic ? <Check size={12} style={{ opacity: 0.4 }} /> :
-                               msg.isRead ? <CheckCheck size={12} className="text-accent" /> : <Check size={12} />}
-                            </span>
-                          )}
-                        </div>
+                      <Eye size={14} />
+                      {hasRequestedReveal ? 'Requested' : 'Reveal'}
+                    </button>
+                  )}
+                  {!isAnonymous && (
+                    <button className="btn btn-sm btn-secondary" onClick={() => navigate(`/user/${otherUser?._id}`)}>
+                      <UserCircle2 size={16} /> Profile
+                    </button>
+                  )}
+
+                  <div className="relative safety-menu-container">
+                    <button className="btn btn-icon btn-sm" onClick={() => setShowSafetyMenu(!showSafetyMenu)}>
+                      <MoreVertical size={18} />
+                    </button>
+                    {showSafetyMenu && (
+                      <div className="safety-dropdown glass" onMouseLeave={() => setShowSafetyMenu(false)}>
+                        <button className="dropdown-item" onClick={handleReportInChat}><Flag size={14} /> Report User</button>
+                        <button className="dropdown-item danger" onClick={handleBlockRoom}><Ban size={14} /> Block Chat</button>
                       </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-              <div ref={messagesEndRef} />
-            </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-            {/* Input Area */}
-            <form className="chat-input-area" onSubmit={handleSend}>
-              <input
-                type="text"
-                placeholder={socketConnected ? "Type a message..." : "Connecting..."}
-                value={newMessage}
-                onChange={handleInputChange}
-                className="message-input"
-                autoComplete="off"
-                disabled={!socketConnected}
-              />
-              <button 
-                type="submit" 
-                className={`btn-send ${!newMessage.trim() || !socketConnected ? 'disabled' : ''}`}
-                disabled={!newMessage.trim() || !socketConnected}
-              >
-                <Send size={18} />
-              </button>
-            </form>
-          </>
-        )}
-      </div>
-      )}
+              {isAnonymous && (
+                <div className="anonymous-banner">
+                  <Info size={16} />
+                  <span>This chat is anonymous. Identities are hidden until both users agree to reveal.</span>
+                </div>
+              )}
 
-      {/* ─── VOICE CALL OVERLAY ─── */}
-      {showVoiceCall && (
-        <div className="voice-call-screen">
-          <div className="vc-caller-avatar">
-            {(isAnonymous ? 'AU' : (otherUser?.name || 'U').slice(0, 2)).toUpperCase()}
-          </div>
-          <div className="vc-caller-name">
-            {isAnonymous ? 'Anonymous User' : otherUser?.name}
-          </div>
-          <div className="vc-call-status">
-            {voiceCallState === 'calling' && '📞 Calling...'}
-            {voiceCallState === 'active' && `${String(Math.floor(voiceCallDuration / 60)).padStart(2, '0')}:${String(voiceCallDuration % 60).padStart(2, '0')}`}
-            {voiceCallState === 'ended' && 'Call Ended'}
-          </div>
-          <div className="vc-voice-controls">
-            <button 
-              className="vc-ctrl-btn"
-              onClick={() => { /* toggle mute */ }}
-            >
-              🎤
-            </button>
-            <button 
-              className="vc-ctrl-btn vc-end-call-btn"
-              onClick={() => {
-                clearInterval(voiceTimerRef.current);
-                setVoiceCallState('ended');
-                setTimeout(() => {
-                  setShowVoiceCall(false);
-                  setVoiceCallState('idle');
-                  setVoiceCallDuration(0);
-                }, 1500);
-              }}
-            >
-              📵
-            </button>
-            <button className="vc-ctrl-btn">
-              🔊
-            </button>
-          </div>
+              {!socketConnected && (
+                <div className="reconnecting-bar">
+                  <RefreshCw size={12} className="spin-icon" /> Reconnecting to server...
+                </div>
+              )}
+
+              {sendError && (
+                <div className="chat-send-error">
+                  <AlertTriangle size={14} />
+                  <span>{sendError}</span>
+                </div>
+              )}
+
+              {/* Messages Area */}
+              <div className="messages-area">
+                {messagesLoading && messages.length === 0 && (
+                  <div className="messages-loading">
+                    <div className="spinner" style={{ width: 24, height: 24 }} />
+                    <span>Loading messages...</span>
+                  </div>
+                )}
+                <AnimatePresence>
+                  {messages.map((msg, index) => {
+                    const senderId = msg.senderId?._id?.toString() || msg.senderId?._id || msg.senderId?.toString?.() || msg.senderId;
+                    const isMine = senderId === userId?.toString() || senderId === userId;
+
+                    return (
+                      <motion.div
+                        key={msg._id || index}
+                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className={`message-wrapper ${isMine ? 'mine' : 'theirs'}`}
+                      >
+                        <div className="message-bubble">
+                          <p>{msg.message}</p>
+                          <div className="message-meta">
+                            <span className="time">{formatTime(msg.timestamp || msg.createdAt)}</span>
+                            {isMine && (
+                              <span className="status">
+                                {msg._optimistic
+                                  ? <Check size={12} style={{ opacity: 0.4 }} />
+                                  : msg.isRead
+                                    ? <CheckCheck size={12} className="text-accent" />
+                                    : <Check size={12} />}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input Area */}
+              <form className="chat-input-area" onSubmit={handleSend}>
+                <input
+                  type="text"
+                  placeholder={socketConnected ? 'Type a message...' : 'Connecting...'}
+                  value={newMessage}
+                  onChange={handleInputChange}
+                  className="message-input"
+                  autoComplete="off"
+                  disabled={!socketConnected}
+                />
+                <button
+                  type="submit"
+                  className={`btn-send ${!newMessage.trim() || !socketConnected ? 'disabled' : ''}`}
+                  disabled={!newMessage.trim() || !socketConnected}
+                >
+                  <Send size={18} />
+                </button>
+              </form>
+            </>
+          )}
         </div>
       )}
     </div>

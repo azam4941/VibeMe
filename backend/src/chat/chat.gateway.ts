@@ -8,12 +8,16 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { ChatService } from './chat.service';
 import { NotificationService } from '../notifications/notification.service';
+import { Message, MessageDocument } from './chat.schema';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // Allow all origins explicitly for Capacitor mobile webview
+    origin: '*',
+    credentials: false,
   },
   transports: ['websocket', 'polling'],
 })
@@ -22,11 +26,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private connectedUsers = new Map<string, string>(); // userId -> socketId
-  private typingTimers = new Map<string, NodeJS.Timeout>(); // key -> timer
+  private typingTimers = new Map<string, NodeJS.Timeout>();
 
   constructor(
     private chatService: ChatService,
     private notificationService: NotificationService,
+    @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
   ) {}
 
   handleConnection(client: Socket) {
@@ -51,10 +56,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     if (!data?.userId) return;
     this.connectedUsers.set(data.userId, client.id);
-    // Join user's personal notification room
     client.join(`user_${data.userId}`);
     this.server.emit('user-online', { userId: data.userId });
-    console.log(`✅ User registered: ${data.userId}`);
+    console.log(`✅ User registered: ${data.userId} -> socket ${client.id}`);
   }
 
   @SubscribeMessage('join-room')
@@ -63,8 +67,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { roomId: string },
   ) {
     if (!data?.roomId) return;
-    client.join(data.roomId);
+    await client.join(data.roomId);
     console.log(`📌 Socket ${client.id} joined room: ${data.roomId}`);
+    // Confirm join back to client
+    client.emit('room-joined', { roomId: data.roomId });
   }
 
   @SubscribeMessage('leave-room')
@@ -103,11 +109,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
       console.log(`✅ Message saved: ${message._id}`);
 
+      // Populate sender info before broadcasting
+      const populated = await this.messageModel
+        .findById(message._id)
+        .populate('senderId', 'name profilePhoto')
+        .lean()
+        .exec();
+
+      const msgToSend = populated || message;
+
       // Broadcast to everyone in the room (including sender)
-      this.server.to(data.roomId).emit('new-message', message);
+      this.server.to(data.roomId).emit('new-message', msgToSend);
       console.log(`📡 Broadcast new-message to room: ${data.roomId}`);
 
-      // Also notify receiver in their personal room (for room list updates)
+      // Notify receiver personally (for room list updates)
       const receiverSocketId = this.connectedUsers.get(data.receiverId);
       if (receiverSocketId) {
         this.server.to(receiverSocketId).emit('message-notification', {
@@ -117,10 +132,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
       }
 
-      // Emit delivery confirmation back to sender
+      // Delivery confirmation to sender
       client.emit('message-sent', { messageId: message._id, roomId: data.roomId });
 
-      // Create a real notification in DB
+      // Create notification in DB
       try {
         await this.notificationService.notifyNewMessage(data.receiverId, 'Someone');
       } catch (e) {
@@ -140,7 +155,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!data?.roomId || !data?.userId) return;
     client.to(data.roomId).emit('user-typing', { userId: data.userId });
 
-    // Auto-stop typing after 3 seconds
     const timerKey = `${data.roomId}_${data.userId}`;
     const existingTimer = this.typingTimers.get(timerKey);
     if (existingTimer) clearTimeout(existingTimer);
@@ -187,13 +201,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const room = await this.chatService.requestReveal(data.roomId, data.userId);
 
       if (room.identityRevealed) {
-        // Both users agreed, broadcast reveal to room
         this.server.to(data.roomId).emit('identity-revealed', {
           roomId: data.roomId,
           participants: room.participants,
         });
       } else {
-        // Only one user requested, notify the other
         this.server.to(data.roomId).emit('reveal-requested', {
           roomId: data.roomId,
           requestedBy: data.userId,
@@ -201,6 +213,87 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     } catch (error) {
       client.emit('message-error', { error: error.message });
+    }
+  }
+
+  // ─── WebRTC Signaling ───
+
+  @SubscribeMessage('call-user')
+  handleCallUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: {
+      to: string;
+      from: string;
+      offer: any;
+      type: 'video' | 'voice';
+      callerName: string;
+    },
+  ) {
+    if (!data?.to || !data?.from || !data?.offer) return;
+    const targetSocketId = this.connectedUsers.get(data.to);
+    if (targetSocketId) {
+      this.server.to(targetSocketId).emit('incoming-call', {
+        from: data.from,
+        offer: data.offer,
+        type: data.type,
+        callerName: data.callerName,
+      });
+    } else {
+      client.emit('call-unavailable', { to: data.to });
+    }
+  }
+
+  @SubscribeMessage('call-accepted')
+  handleCallAccepted(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { to: string; from: string; answer: any },
+  ) {
+    if (!data?.to || !data?.answer) return;
+    const targetSocketId = this.connectedUsers.get(data.to);
+    if (targetSocketId) {
+      this.server.to(targetSocketId).emit('call-answered', {
+        from: data.from,
+        answer: data.answer,
+      });
+    }
+  }
+
+  @SubscribeMessage('call-rejected')
+  handleCallRejected(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { to: string; from: string },
+  ) {
+    if (!data?.to) return;
+    const targetSocketId = this.connectedUsers.get(data.to);
+    if (targetSocketId) {
+      this.server.to(targetSocketId).emit('call-rejected', { from: data.from });
+    }
+  }
+
+  @SubscribeMessage('ice-candidate')
+  handleIceCandidate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { to: string; from: string; candidate: any },
+  ) {
+    if (!data?.to || !data?.candidate) return;
+    const targetSocketId = this.connectedUsers.get(data.to);
+    if (targetSocketId) {
+      this.server.to(targetSocketId).emit('ice-candidate', {
+        from: data.from,
+        candidate: data.candidate,
+      });
+    }
+  }
+
+  @SubscribeMessage('end-call')
+  handleEndCall(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { to: string; from: string },
+  ) {
+    if (!data?.to) return;
+    const targetSocketId = this.connectedUsers.get(data.to);
+    if (targetSocketId) {
+      this.server.to(targetSocketId).emit('call-ended', { from: data.from });
     }
   }
 }

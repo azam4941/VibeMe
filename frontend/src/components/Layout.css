@@ -1,21 +1,149 @@
-﻿/* Layout.css — VibeMe */
 .app-layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: var(--bg);
 }
 
 .main-content {
   flex: 1;
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
 }
 
-/* Override bottom-nav from index.css if needed */
-@media (min-width: 481px) {
-  .main-content {
-    max-width: 420px;
-  }
+/* Incoming Call Overlay */
+.incoming-call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(12px);
 }
+
+.ic-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 32px;
+  position: relative;
+}
+
+.ic-pulse-bg {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 230, 164, 0.3);
+  top: 20px;
+  animation: icPulse 2s ease-out infinite;
+}
+
+@keyframes icPulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.ic-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple) 0%, var(--purple-light) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 800;
+  color: #fff;
+  font-family: var(--font-display);
+  box-shadow: 0 0 50px rgba(110, 86, 255, 0.5);
+}
+
+.ic-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ic-type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.ic-actions {
+  display: flex;
+  gap: 40px;
+  margin-top: 32px;
+}
+
+.ic-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  background: none;
+}
+
+.ic-btn span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  font-family: var(--font-body);
+}
+
+.ic-reject {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ic-reject span { display: block; margin-top: 8px; }
+
+.ic-accept {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: icBounce 1.5s ease infinite;
+}
+.ic-accept span { display: block; margin-top: 8px; }
+
+@keyframes icBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* Fix btn layout since we need column with icon + label */
+.ic-btn.ic-reject,
+.ic-btn.ic-accept {
+  flex-direction: column;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+}
+.ic-btn.ic-reject > svg,
+.ic-btn.ic-accept > svg {
+  width: 64px;
+  height: 64px;
+  padding: 20px;
+  border-radius: 50%;
+}
+.ic-btn.ic-reject > svg { background: var(--red); }
+.ic-btn.ic-accept > svg { background: var(--teal); animation: icBounce 1.5s ease infinite; }

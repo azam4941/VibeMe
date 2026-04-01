@@ -63,6 +63,20 @@ export class ChatService {
       .exec();
   }
 
+  async getRoomById(roomId: string, userId: string): Promise<ChatRoomDocument> {
+    const room = await this.chatRoomModel
+      .findById(roomId)
+      .populate('participants', 'name profilePhoto isVerified currentStatus')
+      .exec();
+    
+    if (!room) throw new NotFoundException('Room not found');
+    
+    const isParticipant = room.participants.some(p => p._id.toString() === userId);
+    if (!isParticipant) throw new ForbiddenException('You are not in this chat room');
+    
+    return room;
+  }
+
   // ───── Messages ─────
 
   async sendMessage(

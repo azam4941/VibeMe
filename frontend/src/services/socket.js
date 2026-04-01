@@ -3,20 +3,22 @@ import { getServerBase } from './api';
 
 class SocketService {
   socket = null;
-  _listeners = new Map(); // event -> Set of callbacks (persisted across reconnects)
+  _listeners = new Map();
+  _activeRooms = new Set();
 
   _getUrl() {
-    // Compute at call time, not module load time
     return getServerBase();
   }
 
   connect() {
     if (this.socket?.connected) {
-      console.log('🔌 Socket already connected:', this.socket.id);
       return this.socket;
     }
-    
-    // Destroy any stale socket
+
+    if (this.socket && (this.socket.connecting || this.socket.disconnected === false)) {
+      return this.socket;
+    }
+
     if (this.socket) {
       this.socket.removeAllListeners();
       this.socket.disconnect();
@@ -24,80 +26,74 @@ class SocketService {
     }
 
     const url = this._getUrl();
-    console.log('🔌 Connecting to socket at:', url);
-    
+    console.log('[socket] Connecting to:', url);
+
     this.socket = io(url, {
       transports: ['polling', 'websocket'],
+      upgrade: true,
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
-      forceNew: true,
     });
 
     this.socket.on('connect', () => {
-      console.log('✅ Socket connected:', this.socket.id);
-      
-      // Auto-register user
+      console.log('[socket] Connected:', this.socket.id);
+
       const user = JSON.parse(localStorage.getItem('ct_user') || 'null');
       if (user?._id) {
-        console.log('📡 Auto-registering user:', user._id);
         this.socket.emit('register', { userId: user._id });
       }
-      
-      // Re-attach ALL persisted listeners on every connect/reconnect
+
+      for (const roomId of this._activeRooms) {
+        this.socket.emit('join-room', { roomId });
+      }
+
       this._reattachListeners();
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('🔌 Socket disconnected:', reason);
+      console.log('[socket] Disconnected:', reason);
     });
 
     this.socket.on('connect_error', (err) => {
-      console.warn('🔌 Socket connection error:', err.message);
+      console.warn('[socket] Connection error:', err.message);
     });
 
     this.socket.io.on('reconnect', (attempt) => {
-      console.log('🔌 Socket reconnected after', attempt, 'attempts');
+      console.log('[socket] Reconnected after', attempt, 'attempts');
     });
 
-    // Attach any listeners that were registered before connect() was called
     this._reattachListeners();
 
     return this.socket;
   }
 
-  // Re-attach all persisted listeners to the raw socket
   _reattachListeners() {
     if (!this.socket) return;
     for (const [event, callbacks] of this._listeners.entries()) {
       for (const cb of callbacks) {
-        // Remove first to prevent duplicates, then add
         this.socket.off(event, cb);
         this.socket.on(event, cb);
       }
     }
   }
 
-  // Persistent event listener — survives reconnects
   _on(event, callback) {
-    // Track it in our persistent map
     if (!this._listeners.has(event)) {
       this._listeners.set(event, new Set());
     }
     this._listeners.get(event).add(callback);
 
-    // Also attach to socket right now if it exists
     if (this.socket) {
-      this.socket.off(event, callback); // prevent duplicates
+      this.socket.off(event, callback);
       this.socket.on(event, callback);
     }
   }
 
   _off(event, callback) {
-    // Remove from persistent map
     if (callback && this._listeners.has(event)) {
       this._listeners.get(event).delete(callback);
       if (this._listeners.get(event).size === 0) {
@@ -107,7 +103,6 @@ class SocketService {
       this._listeners.delete(event);
     }
 
-    // Remove from raw socket
     if (this.socket) {
       if (callback) {
         this.socket.off(event, callback);
@@ -118,27 +113,21 @@ class SocketService {
   }
 
   register(userId) {
+    if (!userId) return;
     if (this.socket?.connected) {
-      console.log('📡 Registering user:', userId);
       this.socket.emit('register', { userId });
-    } else {
-      console.log('📡 Socket not connected yet, register will happen on connect');
-      // Will be handled by auto-register in the connect handler
     }
   }
 
   joinRoom(roomId) {
-    const doJoin = () => {
-      console.log('📌 Joining room:', roomId);
-      this.socket.emit('join-room', { roomId });
-    };
+    if (!roomId) return;
+    this._activeRooms.add(roomId);
 
     if (this.socket?.connected) {
-      doJoin();
+      this.socket.emit('join-room', { roomId });
     } else if (this.socket) {
-      // Wait for connection then join
       const handler = () => {
-        doJoin();
+        this.socket.emit('join-room', { roomId });
         this.socket.off('connect', handler);
       };
       this.socket.on('connect', handler);
@@ -146,16 +135,17 @@ class SocketService {
   }
 
   leaveRoom(roomId) {
+    if (!roomId) return;
+    this._activeRooms.delete(roomId);
     this.socket?.emit('leave-room', { roomId });
   }
 
   sendMessage(data) {
     if (!this.socket?.connected) {
-      console.error('❌ Cannot send message — socket not connected');
-      return;
+      return false;
     }
-    console.log('📤 Sending message:', JSON.stringify(data).slice(0, 200));
     this.socket.emit('send-message', data);
+    return true;
   }
 
   onNewMessage(callback) { this._on('new-message', callback); }
@@ -185,22 +175,52 @@ class SocketService {
   onMessagesRead(callback) { this._on('messages-read', callback); }
   onMessageError(callback) { this._on('message-error', callback); }
 
-  // Identity reveal
   requestReveal(roomId, userId) {
     this.socket?.emit('request-reveal', { roomId, userId });
   }
   onRevealRequested(callback) { this._on('reveal-requested', callback); }
   onIdentityRevealed(callback) { this._on('identity-revealed', callback); }
 
+  // ─── WebRTC Call Signaling ───
+
+  callUser(data) {
+    this.socket?.emit('call-user', data);
+  }
+
+  acceptCall(data) {
+    this.socket?.emit('call-accepted', data);
+  }
+
+  rejectCall(data) {
+    this.socket?.emit('call-rejected', data);
+  }
+
+  sendIceCandidate(data) {
+    this.socket?.emit('ice-candidate', data);
+  }
+
+  endCall(data) {
+    this.socket?.emit('end-call', data);
+  }
+
+  onIncomingCall(callback) { this._on('incoming-call', callback); }
+  offIncomingCall(callback) { this._off('incoming-call', callback); }
+  onCallAnswered(callback) { this._on('call-answered', callback); }
+  offCallAnswered(callback) { this._off('call-answered', callback); }
+  onCallRejected(callback) { this._on('call-rejected', callback); }
+  offCallRejected(callback) { this._off('call-rejected', callback); }
+  onIceCandidate(callback) { this._on('ice-candidate', callback); }
+  offIceCandidate(callback) { this._off('ice-candidate', callback); }
+  onCallEnded(callback) { this._on('call-ended', callback); }
+  offCallEnded(callback) { this._off('call-ended', callback); }
+  onCallUnavailable(callback) { this._on('call-unavailable', callback); }
+  offCallUnavailable(callback) { this._off('call-unavailable', callback); }
+
   disconnect() {
+    this._activeRooms.clear();
     this.socket?.removeAllListeners();
     this.socket?.disconnect();
     this.socket = null;
-    this._listeners.clear();
-  }
-
-  removeAllListeners() {
-    this.socket?.removeAllListeners();
     this._listeners.clear();
   }
 

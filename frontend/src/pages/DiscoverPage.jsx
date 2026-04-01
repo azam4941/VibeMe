@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bell, MapPin, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Bell, MapPin, Check, X, ChevronDown, ChevronUp,
+  Search, SlidersHorizontal, Star, Clock, TrendingUp,
+  MessageSquare, User as UserIcon, Video,
+} from 'lucide-react';
 import api from '../services/api';
 import './DiscoverPage.css';
 
@@ -24,6 +28,13 @@ const VIBE_CATEGORIES = [
   { label: 'Just Exist Together', color: 'amber' },
 ];
 
+const SORT_OPTIONS = [
+  { value: 'rating', label: 'Top Rated', icon: Star },
+  { value: 'price_asc', label: 'Price: Low→High', icon: TrendingUp },
+  { value: 'price_desc', label: 'Price: High→Low', icon: TrendingUp },
+  { value: 'sessions', label: 'Most Sessions', icon: Clock },
+];
+
 const AVATAR_COLORS = ['avatar-purple', 'avatar-pink', 'avatar-teal', 'avatar-amber', 'avatar-coral'];
 
 const DiscoverPage = () => {
@@ -31,34 +42,30 @@ const DiscoverPage = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [selectedVibes, setSelectedVibes] = useState([]);
-  const [mode, setMode] = useState('find'); // 'find' or 'offer'
+  const [mode, setMode] = useState('find');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ online: 0, minPrice: 0, maxPrice: 0, avgRating: 0 });
   const [isVibeDropdownOpen, setIsVibeDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('rating');
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const debounceRef = useRef(null);
 
-  const fetchUsers = async (vibes, currentMode) => {
+  const fetchUsers = useCallback(async (vibes, currentMode, search, sort) => {
     setLoading(true);
     try {
-      const filters = {};
+      const filters = { sortBy: sort };
       const active = vibes.filter(v => v !== 'All Vibes');
-      if (active.length > 0) {
-        filters.interests = active.join(',');
-      }
-      
+      if (active.length > 0) filters.interests = active.join(',');
+      if (search?.trim()) filters.search = search.trim();
+
       const data = await api.discover(filters);
       let filtered = (data.users || []).filter(u => u._id !== user?._id);
 
-      // Simple implementation for "Offer Time"
-      // If "Offer Time", we only show users who are NOT in rentMode (i.e. regular users looking to hire)
-      // Since everyone in discover API is in rentMode=true (per backend), Offer Time might be empty right now
-      // This is a placeholder logic based on user's request.
-      // Alternatively, "Offer Time" could show "My Clients" or just filter differently.
       if (currentMode === 'offer') {
-        // Just as an example, if they have past sessions with you, or are looking for time.
-        // For now, let's keep it showing active buyers if possible, or just all users for demo.
-        filtered = filtered.filter(u => !u.rentMode || u._id); // Show all for now to not break UI
+        filtered = filtered.filter(u => !u.rentMode || u._id);
       }
-      
+
       setUsers(filtered);
 
       if (filtered.length > 0) {
@@ -79,11 +86,20 @@ const DiscoverPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
-    fetchUsers(selectedVibes, mode);
-  }, [selectedVibes, user, mode]);
+    fetchUsers(selectedVibes, mode, searchQuery, sortBy);
+  }, [selectedVibes, mode, sortBy]);
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchUsers(selectedVibes, mode, val, sortBy);
+    }, 400);
+  };
 
   const toggleVibe = (label) => {
     if (label === 'All Vibes') {
@@ -91,9 +107,7 @@ const DiscoverPage = () => {
       return;
     }
     setSelectedVibes(prev => {
-      if (prev.includes(label)) {
-        return prev.filter(v => v !== label);
-      }
+      if (prev.includes(label)) return prev.filter(v => v !== label);
       return [...prev, label];
     });
   };
@@ -118,21 +132,21 @@ const DiscoverPage = () => {
   const handleChatNow = async (targetUser) => {
     try {
       const room = await api.createChatRoom(targetUser._id);
-      navigate(`/chat/${room._id}`);
+      const rid = room?._id ?? room?.id;
+      if (!rid) {
+        console.error('createChatRoom: missing room id', room);
+        navigate('/chat');
+        return;
+      }
+      navigate(`/chat/${rid}`, { state: { room } });
     } catch (err) {
       console.error('Failed to create chat room:', err);
       navigate('/chat');
     }
   };
 
-  const handleVideoCall = (targetUser) => {
-    // Generate a unique room name for jitsi
-    const roomName = `vibeme_${user?._id}_${targetUser._id}_${Date.now()}`;
-    const meetUrl = `https://meet.jit.si/${roomName}`;
-    navigate('/video-call', { state: { url: meetUrl, partnerName: targetUser.name } });
-  };
-
   const selectedCount = selectedVibes.length;
+  const activeSortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label || 'Top Rated';
 
   return (
     <div className="discover-page page">
@@ -140,7 +154,7 @@ const DiscoverPage = () => {
         <div className="hh-row">
           <div>
             <div className="hh-logo">VibeMe</div>
-            <div className="hh-greeting">{getGreeting()}, {user?.name?.split(' ')[0] || 'there'} 👋</div>
+            <div className="hh-greeting">{getGreeting()}, {user?.name?.split(' ')[0] || 'there'}</div>
             <div className="hh-sub">Find your vibe today</div>
           </div>
           <div className="hh-right">
@@ -150,6 +164,24 @@ const DiscoverPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Search Bar */}
+        <div className="discover-search-bar">
+          <Search size={16} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="discover-search-input"
+          />
+          {searchQuery && (
+            <button className="search-clear" onClick={() => { setSearchQuery(''); fetchUsers(selectedVibes, mode, '', sortBy); }}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
         <div className="home-toggle">
           <div className={`ht ${mode === 'find' ? 'on' : ''}`} onClick={() => setMode('find')}>Find People</div>
           <div className={`ht ${mode === 'offer' ? 'on' : ''}`} onClick={() => setMode('offer')}>Offer Time</div>
@@ -165,18 +197,43 @@ const DiscoverPage = () => {
 
         <div className="home-stats-row">
           <div className="hs-card"><div className="hs-num">{stats.online || '0'}</div><div className="hs-label">Online Now</div></div>
-          <div className="hs-card"><div className="hs-num text-teal">₹{stats.minPrice}–₹{stats.maxPrice}</div><div className="hs-label">Price Range</div></div>
+          <div className="hs-card"><div className="hs-num text-teal">{stats.minPrice > 0 ? `₹${stats.minPrice}–₹${stats.maxPrice}` : '—'}</div><div className="hs-label">Price Range</div></div>
           <div className="hs-card"><div className="hs-num text-amber">{stats.avgRating}★</div><div className="hs-label">Avg Rating</div></div>
+        </div>
+
+        {/* Sort Control */}
+        <div className="discover-sort-row">
+          <span className="sort-label">{users.length} people found</span>
+          <div className="sort-dropdown-wrap">
+            <button className="sort-trigger" onClick={() => setShowSortMenu(!showSortMenu)}>
+              <SlidersHorizontal size={13} /> {activeSortLabel}
+              <ChevronDown size={12} />
+            </button>
+            {showSortMenu && (
+              <div className="sort-dropdown" onMouseLeave={() => setShowSortMenu(false)}>
+                {SORT_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    className={`sort-option ${sortBy === opt.value ? 'sort-active' : ''}`}
+                    onClick={() => { setSortBy(opt.value); setShowSortMenu(false); }}
+                  >
+                    <opt.icon size={13} /> {opt.label}
+                    {sortBy === opt.value && <Check size={12} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Dropdown for Browse by Vibe */}
         <div className="vibe-dropdown-container">
-          <div 
-            className="vibe-dropdown-header" 
+          <div
+            className="vibe-dropdown-header"
             onClick={() => setIsVibeDropdownOpen(!isVibeDropdownOpen)}
           >
             <div className="cats-label" style={{ marginBottom: 0 }}>
-              BROWSE BY VIBE 
+              BROWSE BY VIBE
               {selectedCount > 0 && <span className="cats-count-badge">{selectedCount}</span>}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -191,9 +248,7 @@ const DiscoverPage = () => {
             <div className="cats-grid dropdown-cats-grid">
               {VIBE_CATEGORIES.map(cat => {
                 const isAll = cat.label === 'All Vibes';
-                const isSelected = isAll
-                  ? selectedVibes.length === 0
-                  : selectedVibes.includes(cat.label);
+                const isSelected = isAll ? selectedVibes.length === 0 : selectedVibes.includes(cat.label);
                 return (
                   <div
                     key={cat.label}
@@ -212,9 +267,18 @@ const DiscoverPage = () => {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text3)', fontSize: '12px' }}>Loading vibes...</div>
+          <div className="discover-loading">
+            <div className="spinner" />
+            <span>Finding vibes...</span>
+          </div>
         ) : users.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text3)', fontSize: '12px' }}>No vibes found in this category</div>
+          <div className="discover-empty">
+            <UserIcon size={36} opacity={0.3} />
+            <p>{searchQuery ? `No results for "${searchQuery}"` : 'No vibes found in this category'}</p>
+            {searchQuery && (
+              <button className="btn btn-sm btn-secondary" onClick={() => { setSearchQuery(''); fetchUsers(selectedVibes, mode, '', sortBy); }}>Clear Search</button>
+            )}
+          </div>
         ) : (
           users.map((u, i) => (
             <div key={u._id} className="user-card card">
@@ -231,6 +295,9 @@ const DiscoverPage = () => {
                     <MapPin size={9} />
                     {u.location || 'Nearby'}
                   </div>
+                  {u.bio && (
+                    <div className="uc-bio">{u.bio.length > 60 ? u.bio.slice(0, 60) + '...' : u.bio}</div>
+                  )}
                 </div>
                 {u.currentStatus === 'online' && <div className="online-label"><span className="online-dot" /> Live</div>}
               </div>
@@ -242,6 +309,9 @@ const DiscoverPage = () => {
                       {interest}
                     </span>
                   ))}
+                  {u.interests.length > 3 && (
+                    <span className="tag tag-purple" style={{ opacity: 0.6 }}>+{u.interests.length - 3}</span>
+                  )}
                 </div>
               )}
 
@@ -251,8 +321,12 @@ const DiscoverPage = () => {
               </div>
 
               <div className="uc-btns">
-                <div className="ucb-chat" onClick={() => handleChatNow(u)}>💬 Chat Now</div>
-                <div className="ucb-book" onClick={() => navigate(`/user/${u._id}`)}>👤 View Profile</div>
+                <div className="ucb-chat" onClick={() => handleChatNow(u)}>
+                  <MessageSquare size={14} /> Chat Now
+                </div>
+                <div className="ucb-book" onClick={() => navigate(`/user/${u._id}`)}>
+                  <UserIcon size={14} /> View Profile
+                </div>
               </div>
             </div>
           ))

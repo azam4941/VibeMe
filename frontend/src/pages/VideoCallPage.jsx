@@ -1,136 +1,238 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, VideoOff, Phone } from 'lucide-react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCall } from '../context/CallContext';
+import {
+  PhoneOff, Mic, MicOff, Video, VideoOff,
+  Maximize, Minimize, AlertCircle,
+} from 'lucide-react';
 import './VideoCallPage.css';
 
-const VideoCallPage = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { url, partnerName } = location.state || {};
-  const jitsiContainer = useRef(null);
-  const [apiLoaded, setApiLoaded] = useState(false);
-  const [callActive, setCallActive] = useState(false);
+const TERMINAL_STATES = new Set(['ended', 'failed', 'rejected', 'unavailable']);
 
+const VideoCallPage = () => {
+  const navigate = useNavigate();
+  const {
+    callState, callInfo, localStream, remoteStream,
+    endCurrentCall, toggleMute, toggleCamera, setupOutgoingCall,
+  } = useCall();
+
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isCameraOff, setIsCameraOff] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const durationRef = useRef(null);
+  const setupTriggered = useRef(false);
+
+  // Trigger outgoing call setup once on mount
   useEffect(() => {
-    if (!url) {
-      navigate('/home');
-      return;
+    if (callInfo?.isInitiator && callState === 'requesting-media' && !setupTriggered.current) {
+      setupTriggered.current = true;
+      setupOutgoingCall();
+    }
+  }, [callInfo, callState, setupOutgoingCall]);
+
+  // Redirect if there's no call session at all (direct URL visit)
+  useEffect(() => {
+    if (callState === 'idle' && !callInfo) {
+      navigate('/chat', { replace: true });
+    }
+  }, [callState, callInfo, navigate]);
+
+  // Auto-navigate back when a terminal state transitions to idle (CallContext clears after timeout)
+  useEffect(() => {
+    if (callState === 'idle' && callInfo === null && setupTriggered.current) {
+      navigate('/chat', { replace: true });
+    }
+  }, [callState, callInfo, navigate]);
+
+  // Attach local video stream
+  useEffect(() => {
+    const attachLocal = () => {
+      if (localStream.current && localVideoRef.current) {
+        localVideoRef.current.srcObject = localStream.current;
+      }
+    };
+
+    attachLocal();
+    window.addEventListener('local-stream-ready', attachLocal);
+    return () => window.removeEventListener('local-stream-ready', attachLocal);
+  }, [localStream, callState]);
+
+  // Attach remote video stream
+  useEffect(() => {
+    const handleRemoteStream = (e) => {
+      if (remoteVideoRef.current && e.detail) {
+        remoteVideoRef.current.srcObject = e.detail;
+      }
+    };
+
+    window.addEventListener('remote-stream-updated', handleRemoteStream);
+
+    if (remoteStream.current && remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream.current;
     }
 
-    // Extract room name from URL
-    const roomName = url.split('/').pop() || `vibeme_${Date.now()}`;
+    return () => window.removeEventListener('remote-stream-updated', handleRemoteStream);
+  }, [remoteStream, callState]);
 
-    // Load Jitsi Meet External API script
-    const script = document.createElement('script');
-    script.src = 'https://meet.jit.si/external_api.js';
-    script.async = true;
-    script.onload = () => {
-      setApiLoaded(true);
-      initJitsi(roomName);
-    };
-    script.onerror = () => {
-      console.error('Failed to load Jitsi API');
-      // Fallback to iframe
-      setCallActive(true);
-    };
-    document.head.appendChild(script);
-
+  // Duration timer when connected
+  useEffect(() => {
+    if (callState === 'connected') {
+      setDuration(0);
+      durationRef.current = setInterval(() => setDuration(d => d + 1), 1000);
+    }
     return () => {
-      try { document.head.removeChild(script); } catch(e) {}
+      if (durationRef.current) clearInterval(durationRef.current);
     };
-  }, [url]);
+  }, [callState]);
 
-  const initJitsi = (roomName) => {
-    if (!jitsiContainer.current || !window.JitsiMeetExternalAPI) return;
+  const handleEnd = useCallback(() => {
+    if (durationRef.current) clearInterval(durationRef.current);
+    endCurrentCall();
+  }, [endCurrentCall]);
 
-    try {
-      const api = new window.JitsiMeetExternalAPI('meet.jit.si', {
-        roomName: roomName,
-        parentNode: jitsiContainer.current,
-        width: '100%',
-        height: '100%',
-        configOverwrite: {
-          startWithAudioMuted: false,
-          startWithVideoMuted: false,
-          disableDeepLinking: true,
-          prejoinPageEnabled: false,
-          enableClosePage: false,
-          disableInviteFunctions: true,
-          toolbarButtons: [
-            'microphone', 'camera', 'hangup', 'chat',
-            'tileview', 'fullscreen', 'toggle-camera',
-          ],
-        },
-        interfaceConfigOverwrite: {
-          SHOW_JITSI_WATERMARK: false,
-          SHOW_WATERMARK_FOR_GUESTS: false,
-          DEFAULT_BACKGROUND: '#090914',
-          TOOLBAR_ALWAYS_VISIBLE: true,
-          MOBILE_APP_PROMO: false,
-          HIDE_INVITE_MORE_HEADER: true,
-          DISPLAY_WELCOME_PAGE_CONTENT: false,
-        },
-        userInfo: {
-          displayName: partnerName ? `Caller → ${partnerName}` : 'VibeMe User',
-        },
-      });
+  const handleToggleMute = () => {
+    const muted = toggleMute();
+    setIsMuted(muted);
+  };
 
-      setCallActive(true);
+  const handleToggleCamera = () => {
+    const off = toggleCamera();
+    setIsCameraOff(off);
+  };
 
-      api.addEventListener('readyToClose', () => {
-        navigate(-1);
-      });
-
-      api.addEventListener('videoConferenceLeft', () => {
-        navigate(-1);
-      });
-
-    } catch (err) {
-      console.error('Jitsi init failed:', err);
-      setCallActive(true); // fallback to iframe
+  const handleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
     }
   };
 
-  if (!url) return null;
+  const formatDuration = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  };
+
+  const statusLabels = {
+    'requesting-media': 'Requesting permissions...',
+    'calling': 'Calling...',
+    'connecting': 'Connecting...',
+    'connected': formatDuration(duration),
+    'ended': 'Call Ended',
+    'failed': 'Connection Failed',
+    'rejected': 'Call Declined',
+    'unavailable': 'User Unavailable',
+  };
+
+  const isVideo = callInfo?.type === 'video';
+  const peerName = callInfo?.peerName || 'User';
+  const peerInitials = peerName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
+
+  const showRemoteVideo = callState === 'connected' && isVideo;
+  const isEnding = TERMINAL_STATES.has(callState);
 
   return (
-    <div className="video-call-page">
-      <div className="vc-header">
-        <button className="vc-back" onClick={() => navigate(-1)}>
-          <ArrowLeft size={24} />
-        </button>
-        <div className="vc-title">
-          <Phone size={16} /> Call with {partnerName || 'User'}
-        </div>
-      </div>
-      
-      <div className="vc-frame-container">
-        {/* Jitsi will render here */}
-        <div ref={jitsiContainer} className="vc-jitsi-container" />
-        
-        {/* Fallback iframe */}
-        {!apiLoaded && callActive && (
-          <iframe 
-            src={url} 
-            allow="camera; microphone; fullscreen; display-capture; autoplay"
-            className="vc-iframe"
-            title="Video Call"
-          />
-        )}
-        
-        {!callActive && (
-          <div className="vc-loading">
-            <div className="spinner" />
-            <p style={{ marginTop: '16px', color: 'var(--text3)', fontSize: '13px' }}>
-              Setting up secure video call...
-            </p>
+    <div className={`vc-page ${isEnding ? 'vc-ending' : ''}`}>
+      {/* Remote video (full background) */}
+      {showRemoteVideo ? (
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className="vc-remote-video"
+        />
+      ) : (
+        <div className="vc-no-video-bg">
+          <div className="vc-avatar-large">{peerInitials}</div>
+          <div className="vc-peer-name">{peerName}</div>
+          <div className="vc-status-text">
+            {callState === 'connected' && !isVideo ? (
+              <span className="vc-duration">{formatDuration(duration)}</span>
+            ) : (
+              statusLabels[callState] || 'Connecting...'
+            )}
           </div>
+          {(callState === 'calling' || callState === 'connecting' || callState === 'requesting-media') && (
+            <div className="vc-pulse-ring" />
+          )}
+        </div>
+      )}
+
+      {/* Status overlay on video */}
+      {showRemoteVideo && (
+        <div className="vc-top-bar">
+          <div className="vc-top-info">
+            <span className="vc-top-name">{peerName}</span>
+            <span className="vc-top-duration">{formatDuration(duration)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Local video preview (PiP) */}
+      {isVideo && localStream.current && (
+        <div className="vc-local-pip">
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="vc-local-video"
+          />
+          {isCameraOff && (
+            <div className="vc-local-cam-off">
+              <VideoOff size={16} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Terminal state overlay */}
+      {isEnding && (
+        <div className="vc-end-overlay">
+          <AlertCircle size={48} />
+          <div className="vc-end-text">{statusLabels[callState]}</div>
+          {callState === 'unavailable' && (
+            <div className="vc-end-subtext">The user is not online right now.</div>
+          )}
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="vc-controls">
+        <button
+          className={`vc-ctrl ${isMuted ? 'vc-ctrl-active' : ''}`}
+          onClick={handleToggleMute}
+          disabled={isEnding}
+        >
+          {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
+          <span>{isMuted ? 'Unmute' : 'Mute'}</span>
+        </button>
+
+        {isVideo && (
+          <button
+            className={`vc-ctrl ${isCameraOff ? 'vc-ctrl-active' : ''}`}
+            onClick={handleToggleCamera}
+            disabled={isEnding}
+          >
+            {isCameraOff ? <VideoOff size={22} /> : <Video size={22} />}
+            <span>{isCameraOff ? 'Camera On' : 'Camera Off'}</span>
+          </button>
         )}
-      </div>
-      
-      <div className="vc-footer">
-        <button className="vc-end-btn" onClick={() => navigate(-1)}>
-          <VideoOff size={20} /> End Call
+
+        <button className="vc-ctrl vc-ctrl-end" onClick={handleEnd} disabled={isEnding}>
+          <PhoneOff size={22} />
+          <span>End</span>
+        </button>
+
+        <button className="vc-ctrl" onClick={handleFullscreen}>
+          {isFullscreen ? <Minimize size={22} /> : <Maximize size={22} />}
+          <span>{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
         </button>
       </div>
     </div>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
-import { auth } from '../services/firebase';
+import { auth, isLocalDev } from '../services/firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import api from '../services/api';
 import './LoginPage.css';
@@ -13,6 +13,8 @@ const LoginPage = () => {
   const [step, setStep] = useState(0); // 0: Splash, 1: Phone, 2: OTP
   const [loading, setLoading] = useState(false);
   const [otpTimer, setOtpTimer] = useState(42);
+  const [authMode, setAuthMode] = useState(null); // 'firebase' | 'backend'
+  const [backendOtp, setBackendOtp] = useState(null); // dev-only: OTP from backend response
   const { login, loginWithFirebase } = useAuth();
   const { showAlert } = useAlert();
   const otpRefs = useRef([]);
@@ -34,11 +36,24 @@ const LoginPage = () => {
   }, [otp]);
 
   const setupRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-      });
+    if (window.recaptchaVerifier) {
+      try { window.recaptchaVerifier.clear(); } catch (_) {}
+      window.recaptchaVerifier = null;
     }
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      size: 'invisible',
+    });
+  };
+
+  const sendViaBackend = async () => {
+    const res = await api.sendOtp(phoneNumber);
+    setAuthMode('backend');
+    if (res.otp) {
+      setBackendOtp(res.otp);
+    }
+    showAlert(res.message || 'OTP sent successfully!', 'success');
+    setStep(2);
+    setOtpTimer(42);
   };
 
   const handleSendOtp = async (e) => {
@@ -48,24 +63,45 @@ const LoginPage = () => {
       return;
     }
     setLoading(true);
+    setBackendOtp(null);
+
+    // On localhost, skip Firebase entirely — use backend OTP for reliable dev experience
+    if (isLocalDev) {
+      try {
+        await sendViaBackend();
+      } catch (err) {
+        showAlert(err.message || 'Failed to send OTP. Is the backend running?', 'error');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // ─── Production: try Firebase first, fall back to backend ───
     try {
       setupRecaptcha();
       const formatPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
-      const appVerifier = window.recaptchaVerifier;
-      const confirmationResult = await signInWithPhoneNumber(auth, formatPhone, appVerifier);
+      const confirmationResult = await signInWithPhoneNumber(auth, formatPhone, window.recaptchaVerifier);
       window.confirmationResult = confirmationResult;
-      
-      showAlert('OTP sent successfully via Firebase!', 'success');
+      setAuthMode('firebase');
+      showAlert('OTP sent successfully!', 'success');
       setStep(2);
       setOtpTimer(42);
-    } catch (err) {
-      console.error(err);
-      // Reset recaptcha if it fails
+      setLoading(false);
+      return;
+    } catch (firebaseErr) {
+      console.warn('Firebase phone auth failed, falling back to backend OTP:', firebaseErr.code || firebaseErr.message);
       if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
+        try { window.recaptchaVerifier.clear(); } catch (_) {}
         window.recaptchaVerifier = null;
       }
-      showAlert(err.message || 'Failed to send OTP via Firebase', 'error');
+      window.confirmationResult = null;
+    }
+
+    try {
+      await sendViaBackend();
+    } catch (backendErr) {
+      showAlert(backendErr.message || 'Failed to send OTP. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -96,7 +132,7 @@ const LoginPage = () => {
     }
     setLoading(true);
     try {
-      if (window.confirmationResult) {
+      if (authMode === 'firebase' && window.confirmationResult) {
         const result = await window.confirmationResult.confirm(otpString);
         const idToken = await result.user.getIdToken();
         await loginWithFirebase(idToken);
@@ -214,7 +250,7 @@ const LoginPage = () => {
   return (
     <div className="vibe-login page-dark">
       <div className="login-hero">
-        <div className="login-back" onClick={() => setStep(1)}>
+        <div className="login-back" onClick={() => { setStep(1); setOtp(['', '', '', '', '', '']); setBackendOtp(null); }}>
           <ArrowLeft size={20} />
         </div>
         <h1 className="otp-title">Verify OTP</h1>
@@ -222,6 +258,16 @@ const LoginPage = () => {
       </div>
       <div className="login-form-card">
         <label className="ig-label" style={{ textAlign: 'center', display: 'block' }}>ENTER 6-DIGIT CODE</label>
+
+        {backendOtp && (
+          <div style={{
+            textAlign: 'center', padding: '8px 16px', marginBottom: 12,
+            background: 'rgba(110,86,255,0.12)', borderRadius: 10, fontSize: 13,
+            color: 'var(--purple-light)', fontWeight: 600,
+          }}>
+            Dev OTP: {backendOtp}
+          </div>
+        )}
 
         <form onSubmit={handleVerifyOtp}>
           <div className="otp-boxes">
@@ -254,7 +300,7 @@ const LoginPage = () => {
         </form>
 
         <p className="otp-resend">
-          Didn't receive? <span onClick={() => handleSendOtp()}>Resend OTP</span>
+          Didn't receive? <span onClick={() => { setOtp(['', '', '', '', '', '']); handleSendOtp(); }}>Resend OTP</span>
         </p>
 
         <div className="otp-note">

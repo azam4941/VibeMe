@@ -168,6 +168,10 @@ class ApiService {
     return this.request('/chat/rooms');
   }
 
+  getChatRoom(roomId) {
+    return this.request(`/chat/rooms/${roomId}`);
+  }
+
   createChatRoom(userId) {
     return this.request('/chat/rooms', {
       method: 'POST',

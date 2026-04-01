@@ -208,3 +208,68 @@
   flex-direction: column;
   gap: 6px;
 }
+
+/* Validation states */
+.ig-input-error {
+  border-color: var(--red) !important;
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--red);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.field-hint {
+  font-size: 10px;
+  color: var(--text3);
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* Location input with icon */
+.ig-input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ig-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--purple-mid);
+  pointer-events: none;
+}
+.ig-input-icon {
+  padding-left: 38px !important;
+}
+
+/* Error / success banners */
+.setup-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 59, 93, 0.12);
+  border: 1px solid rgba(255, 59, 93, 0.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.setup-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 230, 164, 0.12);
+  border: 1px solid rgba(0, 230, 164, 0.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 600;
+}

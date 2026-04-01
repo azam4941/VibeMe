@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Star, MessageCircle, Clock, ShieldCheck, 
+  Star, MessageCircle, Clock, ShieldCheck, Video,
   MapPin, CheckCircle, Info, CalendarClock, ChevronLeft, Flag, Ban 
 } from 'lucide-react';
 import './UserDetailPage.css';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useCall } from '../context/CallContext';
 
 const UserDetailPage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const { initiateCall } = useCall();
   
   const [profile, setProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -46,7 +48,12 @@ const UserDetailPage = () => {
   const handleStartChat = async () => {
     try {
       const room = await api.createChatRoom(userId);
-      navigate(`/chat/${room._id}`);
+      const rid = room?._id ?? room?.id;
+      if (!rid) {
+        alert('Could not open chat: invalid room from server.');
+        return;
+      }
+      navigate(`/chat/${rid}`, { state: { room } });
     } catch (err) {
       alert('Failed to start chat: ' + err.message);
     }
@@ -279,9 +286,9 @@ const UserDetailPage = () => {
                       </button>
                       <button 
                         className="btn btn-secondary w-full"
-                        onClick={() => navigate('/video-call', { state: { url: `https://meet.jit.si/vibeme_${currentUser?._id}_${profile._id}_${Date.now()}`, partnerName: profile.name } })}
+                        onClick={() => initiateCall(profile._id, profile.name, 'video')}
                       >
-                        📸 Start Video Call
+                        <Video size={18} /> Start Video Call
                       </button>
                     </div>
                   )}

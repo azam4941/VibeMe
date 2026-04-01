@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { CallProvider } from './context/CallContext';
 import { AlertProvider } from './context/AlertContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
@@ -33,12 +34,12 @@ function AdminRoute({ children }) {
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
-  
+
   return (
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/discover" /> : <LoginPage />} />
       <Route path="/setup" element={<ProtectedRoute><ProfileSetupPage /></ProtectedRoute>} />
-      
+
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/discover" />} />
         <Route path="discover" element={<DiscoverPage />} />
@@ -59,12 +60,20 @@ function AppRoutes() {
   );
 }
 
+function AuthenticatedApp() {
+  return (
+    <CallProvider>
+      <AppRoutes />
+    </CallProvider>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AlertProvider>
         <AuthProvider>
-          <AppRoutes />
+          <AuthenticatedApp />
         </AuthProvider>
       </AlertProvider>
     </BrowserRouter>
