@@ -33,16 +33,9 @@ const VideoCallPage = () => {
     }
   }, [callInfo, callState, setupOutgoingCall]);
 
-  // Redirect if there's no call session at all (direct URL visit)
+  // Redirect to /chat when the call is fully idle (either direct URL visit or after terminal → idle)
   useEffect(() => {
-    if (callState === 'idle' && !callInfo) {
-      navigate('/chat', { replace: true });
-    }
-  }, [callState, callInfo, navigate]);
-
-  // Auto-navigate back when a terminal state transitions to idle (CallContext clears after timeout)
-  useEffect(() => {
-    if (callState === 'idle' && callInfo === null && setupTriggered.current) {
+    if (callState === 'idle' && callInfo === null) {
       navigate('/chat', { replace: true });
     }
   }, [callState, callInfo, navigate]);

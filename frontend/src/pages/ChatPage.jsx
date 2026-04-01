@@ -95,7 +95,8 @@ const ChatPage = () => {
   useEffect(() => {
     if (!roomId || !userId) return;
 
-    if (prevRoomIdRef.current !== roomId) {
+    const isNewRoom = prevRoomIdRef.current !== roomId;
+    if (isNewRoom) {
       setActiveRoom(null);
       setRoomError(null);
       prevRoomIdRef.current = roomId;
@@ -106,39 +107,40 @@ const ChatPage = () => {
 
     const eq = (a, b) => a != null && b != null && String(a) === String(b);
 
+    const applyRoom = (room) => {
+      if (cancelled) return;
+      setActiveRoom(room);
+      setRoomError(null);
+      setRooms(prev => (prev.some(r => eq(r._id ?? r.id, roomId)) ? prev : [room, ...prev]));
+    };
+
     const initRoom = async () => {
-      // Use navigation state (passed from Discover / UserDetail)
+      // 1. Use navigation state (passed from Discover / UserDetail)
       const fromNav = location.state?.room;
       if (fromNav && eq(fromNav._id ?? fromNav.id, roomId) && consumedNavRoomRef.current !== roomId) {
         consumedNavRoomRef.current = roomId;
-        if (!cancelled) {
-          setActiveRoom(fromNav);
-          setRoomError(null);
-          setRooms(prev => (prev.some(r => eq(r._id ?? r.id, roomId)) ? prev : [fromNav, ...prev]));
-        }
+        applyRoom(fromNav);
         return;
       }
 
-      // Already loaded from rooms list
-      const list = roomsRef.current;
-      const found = list.find(r => eq(r._id ?? r.id, roomId));
+      // 2. Already loaded from rooms list
+      const found = roomsRef.current.find(r => eq(r._id ?? r.id, roomId));
       if (found) {
         if (!cancelled) { setActiveRoom(found); setRoomError(null); }
         return;
       }
 
-      // Fetch from API
-      try {
-        const room = await api.getChatRoom(roomId);
-        if (!cancelled && room) {
-          setActiveRoom(room);
-          setRoomError(null);
-          setRooms(prev => (prev.some(r => eq(r._id ?? r.id, roomId)) ? prev : [room, ...prev]));
+      // 3. Fetch from API with retry
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const room = await api.getChatRoom(roomId);
+          if (room) { applyRoom(room); return; }
+        } catch (err) {
+          console.error(`Failed to get chat room (attempt ${attempt + 1}):`, err);
+          if (attempt === 0) await new Promise(r => setTimeout(r, 800));
         }
-      } catch (err) {
-        console.error('Failed to get chat room:', err);
-        if (!cancelled) setRoomError('Could not load this conversation.');
       }
+      if (!cancelled) setRoomError('Could not load this conversation. Tap retry.');
     };
 
     initRoom();
@@ -478,7 +480,12 @@ const ChatPage = () => {
               <div className="glass empty-chat-card">
                 <AlertTriangle size={32} style={{ margin: '0 auto 16px', color: 'var(--red)' }} />
                 <h3>{roomError}</h3>
-                <button className="btn btn-sm btn-secondary" style={{ marginTop: 12 }} onClick={() => navigate('/chat')}>Go Back</button>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'center' }}>
+                  <button className="btn btn-sm btn-primary" onClick={() => { setRoomError(null); prevRoomIdRef.current = null; }}>
+                    <RefreshCw size={14} /> Retry
+                  </button>
+                  <button className="btn btn-sm btn-secondary" onClick={() => navigate('/chat')}>Go Back</button>
+                </div>
               </div>
             </div>
           ) : !activeRoom ? (
