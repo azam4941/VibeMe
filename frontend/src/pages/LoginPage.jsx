@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
-import { auth, isLocalDev } from '../services/firebase';
+import { auth } from '../services/firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import api from '../services/api';
 import './LoginPage.css';
@@ -36,26 +36,14 @@ const LoginPage = () => {
   }, [otp]);
 
   const setupRecaptcha = () => {
-    if (window.recaptchaVerifier) {
-      try { window.recaptchaVerifier.clear(); } catch (_) {}
-      window.recaptchaVerifier = null;
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+      });
     }
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      size: 'invisible',
-    });
   };
 
-  const sendViaBackend = async () => {
-    const res = await api.sendOtp(phoneNumber);
-    setAuthMode('backend');
-    if (res.otp) {
-      setBackendOtp(res.otp);
-    }
-    showAlert(res.message || 'OTP sent successfully!', 'success');
-    setStep(2);
-    setOtpTimer(42);
-  };
-
+  // Try Firebase first, fall back to backend OTP on failure
   const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
     if (!phoneNumber || phoneNumber.length < 10) {
@@ -65,25 +53,15 @@ const LoginPage = () => {
     setLoading(true);
     setBackendOtp(null);
 
-    // On localhost, skip Firebase entirely — use backend OTP for reliable dev experience
-    if (isLocalDev) {
-      try {
-        await sendViaBackend();
-      } catch (err) {
-        showAlert(err.message || 'Failed to send OTP. Is the backend running?', 'error');
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    // ─── Production: try Firebase first, fall back to backend ───
+    // ─── Attempt 1: Firebase Phone Auth ───
     try {
       setupRecaptcha();
       const formatPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
-      const confirmationResult = await signInWithPhoneNumber(auth, formatPhone, window.recaptchaVerifier);
+      const appVerifier = window.recaptchaVerifier;
+      const confirmationResult = await signInWithPhoneNumber(auth, formatPhone, appVerifier);
       window.confirmationResult = confirmationResult;
       setAuthMode('firebase');
+
       showAlert('OTP sent successfully!', 'success');
       setStep(2);
       setOtpTimer(42);
@@ -91,6 +69,7 @@ const LoginPage = () => {
       return;
     } catch (firebaseErr) {
       console.warn('Firebase phone auth failed, falling back to backend OTP:', firebaseErr.code || firebaseErr.message);
+      // Clean up reCAPTCHA so it doesn't interfere
       if (window.recaptchaVerifier) {
         try { window.recaptchaVerifier.clear(); } catch (_) {}
         window.recaptchaVerifier = null;
@@ -98,9 +77,22 @@ const LoginPage = () => {
       window.confirmationResult = null;
     }
 
+    // ─── Attempt 2: Backend OTP (Twilio / Fast2SMS / console) ───
     try {
-      await sendViaBackend();
+      const res = await api.sendOtp(phoneNumber);
+      setAuthMode('backend');
+
+      // In dev mode, backend may return the OTP for testing
+      if (res.otp) {
+        setBackendOtp(res.otp);
+        console.log('Dev OTP:', res.otp);
+      }
+
+      showAlert(res.message || 'OTP sent successfully!', 'success');
+      setStep(2);
+      setOtpTimer(42);
     } catch (backendErr) {
+      console.error('Backend OTP also failed:', backendErr);
       showAlert(backendErr.message || 'Failed to send OTP. Please try again.', 'error');
     } finally {
       setLoading(false);

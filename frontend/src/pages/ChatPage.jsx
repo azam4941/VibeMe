@@ -40,6 +40,7 @@ const ChatPage = () => {
   const activeRoomRef = useRef(null);
   const prevRoomIdRef = useRef(null);
   const roomsRef = useRef([]);
+  const consumedNavRoomRef = useRef(null);
   roomsRef.current = rooms;
 
   useEffect(() => { currentRoomRef.current = roomId; }, [roomId]);
@@ -91,7 +92,6 @@ const ChatPage = () => {
   };
 
   // ─── 2. SET ACTIVE ROOM ───
-  // Deps: only roomId + userId. NOT location.state (object ref changes break StrictMode).
   useEffect(() => {
     if (!roomId || !userId) return;
 
@@ -99,50 +99,52 @@ const ChatPage = () => {
       setActiveRoom(null);
       setRoomError(null);
       prevRoomIdRef.current = roomId;
+      consumedNavRoomRef.current = null;
     }
 
     let cancelled = false;
-    const sameId = (a, b) => a != null && b != null && String(a) === String(b);
 
-    // Optimistically show room from navigation state (instant UI)
-    const navRoom = location.state?.room;
-    if (navRoom && sameId(navRoom._id ?? navRoom.id, roomId)) {
-      setActiveRoom(navRoom);
-      setRoomError(null);
-    }
+    const eq = (a, b) => a != null && b != null && String(a) === String(b);
 
-    // Always fetch authoritative data from API (works in StrictMode, always correct)
-    api.getChatRoom(roomId)
-      .then(room => {
+    const initRoom = async () => {
+      // Use navigation state (passed from Discover / UserDetail)
+      const fromNav = location.state?.room;
+      if (fromNav && eq(fromNav._id ?? fromNav.id, roomId) && consumedNavRoomRef.current !== roomId) {
+        consumedNavRoomRef.current = roomId;
+        if (!cancelled) {
+          setActiveRoom(fromNav);
+          setRoomError(null);
+          setRooms(prev => (prev.some(r => eq(r._id ?? r.id, roomId)) ? prev : [fromNav, ...prev]));
+        }
+        return;
+      }
+
+      // Already loaded from rooms list
+      const list = roomsRef.current;
+      const found = list.find(r => eq(r._id ?? r.id, roomId));
+      if (found) {
+        if (!cancelled) { setActiveRoom(found); setRoomError(null); }
+        return;
+      }
+
+      // Fetch from API
+      try {
+        const room = await api.getChatRoom(roomId);
         if (!cancelled && room) {
           setActiveRoom(room);
           setRoomError(null);
-          setRooms(prev => prev.some(r => sameId(r._id ?? r.id, roomId)) ? prev : [room, ...prev]);
+          setRooms(prev => (prev.some(r => eq(r._id ?? r.id, roomId)) ? prev : [room, ...prev]));
         }
-      })
-      .catch(async (err) => {
-        console.error('getChatRoom failed (attempt 1):', err.message);
-        // One retry after a short delay
-        try {
-          await new Promise(r => setTimeout(r, 1000));
-          if (cancelled) return;
-          const room = await api.getChatRoom(roomId);
-          if (!cancelled && room) {
-            setActiveRoom(room);
-            setRoomError(null);
-            setRooms(prev => prev.some(r => sameId(r._id ?? r.id, roomId)) ? prev : [room, ...prev]);
-          }
-        } catch (retryErr) {
-          console.error('getChatRoom failed (attempt 2):', retryErr.message);
-          // Only show error if we don't already have the room from nav state
-          if (!cancelled && !navRoom) {
-            setRoomError('Could not load this conversation. Tap retry.');
-          }
-        }
-      });
+      } catch (err) {
+        console.error('Failed to get chat room:', err);
+        if (!cancelled) setRoomError('Could not load this conversation.');
+      }
+    };
+
+    initRoom();
 
     return () => { cancelled = true; };
-  }, [roomId, userId]);
+  }, [roomId, userId, location.state]);
 
   // ─── 2b. JOIN SOCKET ROOM & FETCH MESSAGES ───
   useEffect(() => {
@@ -286,7 +288,13 @@ const ChatPage = () => {
       content: trimmed,
     };
 
-    // Show message optimistically regardless of socket state
+    const sent = socketService.sendMessage(msgData);
+    if (!sent) {
+      setSendError('Not connected. Retrying...');
+      setTimeout(() => setSendError(null), 3000);
+      return;
+    }
+
     const optimisticMsg = {
       _id: 'temp_' + Date.now(),
       senderId: { _id: userId, name: user?.name, profilePhoto: user?.profilePhoto },
@@ -301,19 +309,6 @@ const ChatPage = () => {
     scrollToBottom();
     setNewMessage('');
     handleStopTypingEmit();
-
-    const sent = socketService.sendMessage(msgData);
-    if (!sent) {
-      setSendError('Connecting... message will send when online.');
-      // Retry sending when socket reconnects
-      const retryInterval = setInterval(() => {
-        if (socketService.sendMessage(msgData)) {
-          clearInterval(retryInterval);
-          setSendError(null);
-        }
-      }, 2000);
-      setTimeout(() => { clearInterval(retryInterval); setSendError(null); }, 15000);
-    }
   }, [newMessage, userId, user?.name, user?.profilePhoto]);
 
   const handleInputChange = (e) => {
@@ -388,9 +383,7 @@ const ChatPage = () => {
     }
   };
 
-  // Only show full-page loading spinner for the room list view (no roomId).
-  // When a specific room is open, skip the gate — activeRoom from nav state is enough.
-  if (loading && !roomId) return <div className="loading-page"><div className="spinner" /></div>;
+  if (loading) return <div className="loading-page"><div className="spinner" /></div>;
 
   const isTyping = typingUsers.size > 0;
   const hasRequestedReveal = activeRoom?.revealRequests?.some(id => id?.toString() === userId?.toString());
@@ -485,12 +478,7 @@ const ChatPage = () => {
               <div className="glass empty-chat-card">
                 <AlertTriangle size={32} style={{ margin: '0 auto 16px', color: 'var(--red)' }} />
                 <h3>{roomError}</h3>
-                <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'center' }}>
-                  <button className="btn btn-sm btn-primary" onClick={() => { setRoomError(null); prevRoomIdRef.current = null; }}>
-                    <RefreshCw size={14} /> Retry
-                  </button>
-                  <button className="btn btn-sm btn-secondary" onClick={() => navigate('/chat')}>Go Back</button>
-                </div>
+                <button className="btn btn-sm btn-secondary" style={{ marginTop: 12 }} onClick={() => navigate('/chat')}>Go Back</button>
               </div>
             </div>
           ) : !activeRoom ? (
@@ -634,16 +622,17 @@ const ChatPage = () => {
               <form className="chat-input-area" onSubmit={handleSend}>
                 <input
                   type="text"
-                  placeholder="Type a message..."
+                  placeholder={socketConnected ? 'Type a message...' : 'Connecting...'}
                   value={newMessage}
                   onChange={handleInputChange}
                   className="message-input"
                   autoComplete="off"
+                  disabled={!socketConnected}
                 />
                 <button
                   type="submit"
-                  className={`btn-send ${!newMessage.trim() ? 'disabled' : ''}`}
-                  disabled={!newMessage.trim()}
+                  className={`btn-send ${!newMessage.trim() || !socketConnected ? 'disabled' : ''}`}
+                  disabled={!newMessage.trim() || !socketConnected}
                 >
                   <Send size={18} />
                 </button>

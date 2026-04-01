@@ -8,12 +8,8 @@ const CallContext = createContext(null);
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'stun:stun2.l.google.com:19302' },
 ];
-
-const CALL_TIMEOUT_MS = 30000;
 
 export function CallProvider({ children }) {
   const { user } = useAuth();
@@ -30,17 +26,12 @@ export function CallProvider({ children }) {
   const callStateRef = useRef(callState);
   callStateRef.current = callState;
   const disconnectTimerRef = useRef(null);
-  const callTimeoutRef = useRef(null);
 
   // Stops media tracks and closes peer connection (does NOT touch callInfo/callState)
   const stopMedia = useCallback(() => {
     if (disconnectTimerRef.current) {
       clearTimeout(disconnectTimerRef.current);
       disconnectTimerRef.current = null;
-    }
-    if (callTimeoutRef.current) {
-      clearTimeout(callTimeoutRef.current);
-      callTimeoutRef.current = null;
     }
     if (localStream.current) {
       localStream.current.getTracks().forEach(t => t.stop());
@@ -172,14 +163,11 @@ export function CallProvider({ children }) {
     return pc;
   }, [user, stopMedia]);
 
+  // Navigate immediately, WebRTC setup happens on VideoCallPage mount
   const initiateCall = useCallback(async (peerId, peerName, type = 'video') => {
-    if (callStateRef.current !== 'idle') {
-      throw new Error('A call is already in progress');
-    }
-    if (!socketService.isConnected()) {
-      throw new Error('Not connected to server. Please wait and try again.');
-    }
+    if (callStateRef.current !== 'idle') return;
     callStateRef.current = 'requesting-media';
+
     setCallState('requesting-media');
     setCallInfo({ peerId, peerName, type, isInitiator: true });
     navigate('/video-call');
@@ -209,22 +197,11 @@ export function CallProvider({ children }) {
         type: callInfo.type,
         callerName: user.name || 'User',
       });
-
-      // Auto-end if the callee doesn't answer within timeout
-      callTimeoutRef.current = setTimeout(() => {
-        callTimeoutRef.current = null;
-        if (callStateRef.current === 'calling') {
-          stopMedia();
-          setIncomingCall(null);
-          setCallState('unavailable');
-          setTimeout(() => { setCallInfo(null); setCallState('idle'); }, 3000);
-        }
-      }, CALL_TIMEOUT_MS);
     } catch (err) {
       console.error('Failed to setup outgoing call:', err);
       fullReset();
     }
-  }, [callInfo, user, createPeerConnection, fullReset, stopMedia]);
+  }, [callInfo, user, createPeerConnection, fullReset]);
 
   const acceptIncoming = useCallback(async () => {
     if (!incomingCall) return;
@@ -309,11 +286,6 @@ export function CallProvider({ children }) {
 
     const handleCallAnswered = async ({ answer }) => {
       if (!peerConnection.current) return;
-      // Call was answered — clear the unanswered timeout
-      if (callTimeoutRef.current) {
-        clearTimeout(callTimeoutRef.current);
-        callTimeoutRef.current = null;
-      }
       try {
         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
         for (const candidate of pendingCandidates.current) {

@@ -11,8 +11,6 @@ const firebaseConfig = {
   measurementId: "G-BMP7C2KWTP"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-
-const hostname = window.location.hostname;
-export const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1';

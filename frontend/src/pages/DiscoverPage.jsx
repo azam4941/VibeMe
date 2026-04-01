@@ -7,7 +7,6 @@ import {
   MessageSquare, User as UserIcon, Video,
 } from 'lucide-react';
 import api from '../services/api';
-import { useAlert } from '../context/AlertContext';
 import './DiscoverPage.css';
 
 const VIBE_CATEGORIES = [
@@ -41,7 +40,6 @@ const AVATAR_COLORS = ['avatar-purple', 'avatar-pink', 'avatar-teal', 'avatar-am
 const DiscoverPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { showAlert } = useAlert();
   const [users, setUsers] = useState([]);
   const [selectedVibes, setSelectedVibes] = useState([]);
   const [mode, setMode] = useState('find');
@@ -131,23 +129,19 @@ const DiscoverPage = () => {
     return 'Good evening';
   };
 
-  const [chatLoading, setChatLoading] = useState(null);
-
   const handleChatNow = async (targetUser) => {
-    setChatLoading(targetUser._id);
     try {
       const room = await api.createChatRoom(targetUser._id);
       const rid = room?._id ?? room?.id;
       if (!rid) {
-        showAlert('Could not open chat. Please try again.', 'error');
+        console.error('createChatRoom: missing room id', room);
+        navigate('/chat');
         return;
       }
       navigate(`/chat/${rid}`, { state: { room } });
     } catch (err) {
       console.error('Failed to create chat room:', err);
-      showAlert('Failed to start chat: ' + (err.message || 'Server error'), 'error');
-    } finally {
-      setChatLoading(null);
+      navigate('/chat');
     }
   };
 
@@ -327,8 +321,8 @@ const DiscoverPage = () => {
               </div>
 
               <div className="uc-btns">
-                <div className={`ucb-chat ${chatLoading === u._id ? 'ucb-loading' : ''}`} onClick={() => !chatLoading && handleChatNow(u)}>
-                  <MessageSquare size={14} /> {chatLoading === u._id ? 'Opening...' : 'Chat Now'}
+                <div className="ucb-chat" onClick={() => handleChatNow(u)}>
+                  <MessageSquare size={14} /> Chat Now
                 </div>
                 <div className="ucb-book" onClick={() => navigate(`/user/${u._id}`)}>
                   <UserIcon size={14} /> View Profile

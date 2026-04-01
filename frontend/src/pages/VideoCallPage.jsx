@@ -24,7 +24,6 @@ const VideoCallPage = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const durationRef = useRef(null);
   const setupTriggered = useRef(false);
-  const mountedAt = useRef(Date.now());
 
   // Trigger outgoing call setup once on mount
   useEffect(() => {
@@ -34,10 +33,16 @@ const VideoCallPage = () => {
     }
   }, [callInfo, callState, setupOutgoingCall]);
 
-  // Redirect to /chat when the call is fully idle.
-  // Skip during the first 500ms to let state propagate from initiateCall.
+  // Redirect if there's no call session at all (direct URL visit)
   useEffect(() => {
-    if (callState === 'idle' && callInfo === null && Date.now() - mountedAt.current > 500) {
+    if (callState === 'idle' && !callInfo) {
+      navigate('/chat', { replace: true });
+    }
+  }, [callState, callInfo, navigate]);
+
+  // Auto-navigate back when a terminal state transitions to idle (CallContext clears after timeout)
+  useEffect(() => {
+    if (callState === 'idle' && callInfo === null && setupTriggered.current) {
       navigate('/chat', { replace: true });
     }
   }, [callState, callInfo, navigate]);

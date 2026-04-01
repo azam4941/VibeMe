@@ -11,12 +11,18 @@ class SocketService {
   }
 
   connect() {
-    // If socket already exists, let socket.io handle reconnection internally
-    if (this.socket) {
-      if (!this.socket.connected) {
-        this.socket.connect();
-      }
+    if (this.socket?.connected) {
       return this.socket;
+    }
+
+    if (this.socket && (this.socket.connecting || this.socket.disconnected === false)) {
+      return this.socket;
+    }
+
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
     }
 
     const url = this._getUrl();
