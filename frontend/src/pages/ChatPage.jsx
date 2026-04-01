@@ -366,7 +366,7 @@ const ChatPage = () => {
   const handleVoiceCall = async () => {
     if (!otherUser?._id) return;
     try {
-      await initiateCall(otherUser._id, isAnonymous ? 'Anonymous User' : otherUser.name, 'voice');
+      await initiateCall(otherUser._id, otherUser.name || 'User', 'voice');
     } catch (err) {
       setSendError('Could not start voice call. Check mic permissions.');
       setTimeout(() => setSendError(null), 4000);
@@ -376,7 +376,7 @@ const ChatPage = () => {
   const handleVideoCall = async () => {
     if (!otherUser?._id) return;
     try {
-      await initiateCall(otherUser._id, isAnonymous ? 'Anonymous User' : otherUser.name, 'video');
+      await initiateCall(otherUser._id, otherUser.name || 'User', 'video');
     } catch (err) {
       setSendError('Could not start video call. Check camera/mic permissions.');
       setTimeout(() => setSendError(null), 4000);
@@ -437,10 +437,8 @@ const ChatPage = () => {
               rooms.map(room => {
                 const partner = room.participants?.find(p => p._id?.toString() !== userId?.toString());
                 const isActive = room._id === roomId;
-                const displayName = room.isAnonymous ? 'Anonymous User' : (partner?.name || 'User');
-                const displayPhoto = room.isAnonymous
-                  ? `https://api.dicebear.com/7.x/bottts/svg?seed=${partner?._id}`
-                  : (partner?.profilePhoto || `https://avatar.iran.liara.run/public?username=${partner?.name}`);
+                const displayName = partner?.name || 'User';
+                const displayPhoto = partner?.profilePhoto || `https://avatar.iran.liara.run/public?username=${partner?.name}`;
 
                 return (
                   <div
@@ -496,18 +494,15 @@ const ChatPage = () => {
                   <ChevronLeft size={24} />
                 </button>
 
-                <div className="chat-partner-info">
+                <div className="chat-partner-info" onClick={() => navigate(`/user/${otherUser?._id}`)} style={{ cursor: 'pointer' }}>
                   <img
-                    src={isAnonymous
-                      ? `https://api.dicebear.com/7.x/bottts/svg?seed=${otherUser?._id}`
-                      : (otherUser?.profilePhoto || `https://avatar.iran.liara.run/public?username=${otherUser?.name}`)}
+                    src={otherUser?.profilePhoto || `https://avatar.iran.liara.run/public?username=${otherUser?.name}`}
                     alt="Partner"
                     className="avatar flex-shrink-0"
                   />
                   <div>
                     <h3 className="partner-name">
-                      {isAnonymous ? 'Anonymous User' : otherUser?.name}
-                      {isAnonymous && <ShieldAlert size={14} className="ml-8 text-accent inline" />}
+                      {otherUser?.name || 'User'}
                     </h3>
                     {isTyping
                       ? <span className="typing-indicator">typing...</span>
@@ -526,21 +521,7 @@ const ChatPage = () => {
                     <Video size={16} />
                   </button>
 
-                  {isAnonymous && (
-                    <button
-                      className={`btn btn-sm ${hasRequestedReveal ? 'btn-success' : 'btn-outline'}`}
-                      onClick={requestReveal}
-                      disabled={hasRequestedReveal}
-                    >
-                      <Eye size={14} />
-                      {hasRequestedReveal ? 'Requested' : 'Reveal'}
-                    </button>
-                  )}
-                  {!isAnonymous && (
-                    <button className="btn btn-sm btn-secondary" onClick={() => navigate(`/user/${otherUser?._id}`)}>
-                      <UserCircle2 size={16} /> Profile
-                    </button>
-                  )}
+                  {/* Profile/Reveal buttons removed */}
 
                   <div className="relative safety-menu-container">
                     <button className="btn btn-icon btn-sm" onClick={() => setShowSafetyMenu(!showSafetyMenu)}>
@@ -556,12 +537,7 @@ const ChatPage = () => {
                 </div>
               </div>
 
-              {isAnonymous && (
-                <div className="anonymous-banner">
-                  <Info size={16} />
-                  <span>This chat is anonymous. Identities are hidden until both users agree to reveal.</span>
-                </div>
-              )}
+
 
               {!socketConnected && (
                 <div className="reconnecting-bar">

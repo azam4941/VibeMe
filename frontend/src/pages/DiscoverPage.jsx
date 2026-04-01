@@ -281,7 +281,7 @@ const DiscoverPage = () => {
           </div>
         ) : (
           users.map((u, i) => (
-            <div key={u._id} className="user-card card">
+            <div key={u._id} className="user-card card" onClick={() => navigate(`/user/${u._id}`)} style={{ cursor: 'pointer' }}>
               <div className="uc-top">
                 <div className={`avatar avatar-md ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
                   {u.profilePhoto ? <img src={u.profilePhoto} alt={u.name} className="avatar-img" /> : getInitials(u.name)}
@@ -321,10 +321,10 @@ const DiscoverPage = () => {
               </div>
 
               <div className="uc-btns">
-                <div className="ucb-chat" onClick={() => handleChatNow(u)}>
+                <div className="ucb-chat" onClick={(e) => { e.stopPropagation(); handleChatNow(u); }}>
                   <MessageSquare size={14} /> Chat Now
                 </div>
-                <div className="ucb-book" onClick={() => navigate(`/user/${u._id}`)}>
+                <div className="ucb-book" onClick={(e) => { e.stopPropagation(); navigate(`/user/${u._id}`); }}>
                   <UserIcon size={14} /> View Profile
                 </div>
               </div>
