@@ -1,19 +1,13 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useCall } from '../context/CallContext';
-import { Home, MessageCircle, Wallet, User, Bell, Phone, PhoneOff, Video } from 'lucide-react';
+import { Home, MessageCircle, Wallet, User, Bell } from 'lucide-react';
 import './Layout.css';
 
 export default function Layout() {
   const { user } = useAuth();
-  const { incomingCall, acceptIncoming, rejectIncoming } = useCall();
   const location = useLocation();
 
   const hideNav = ['/session', '/rating', '/video-call'].some(p => location.pathname.startsWith(p)) || location.pathname.startsWith('/chat/');
-
-  const callerInitials = incomingCall?.callerName
-    ? incomingCall.callerName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : 'U';
 
   return (
     <div className="app-layout">
@@ -47,30 +41,7 @@ export default function Layout() {
         </nav>
       )}
 
-      {/* Incoming Call Modal */}
-      {incomingCall && (
-        <div className="incoming-call-overlay">
-          <div className="ic-card">
-            <div className="ic-pulse-bg" />
-            <div className="ic-avatar">{callerInitials}</div>
-            <div className="ic-name">{incomingCall.callerName || 'Unknown Caller'}</div>
-            <div className="ic-type">
-              {incomingCall.type === 'video' ? <Video size={14} /> : <Phone size={14} />}
-              Incoming {incomingCall.type === 'video' ? 'Video' : 'Voice'} Call
-            </div>
-            <div className="ic-actions">
-              <button className="ic-btn ic-reject" onClick={rejectIncoming}>
-                <PhoneOff size={24} />
-                <span>Decline</span>
-              </button>
-              <button className="ic-btn ic-accept" onClick={acceptIncoming}>
-                <Phone size={24} />
-                <span>Accept</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Incoming call overlay is now handled globally in App.jsx */}
     </div>
   );
 }

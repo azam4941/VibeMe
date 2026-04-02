@@ -22,6 +22,7 @@ const VideoCallPage = () => {
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hasRemoteStream, setHasRemoteStream] = useState(false);
   const durationRef = useRef(null);
   const setupTriggered = useRef(false);
 
@@ -29,6 +30,7 @@ const VideoCallPage = () => {
   useEffect(() => {
     if (callInfo?.isInitiator && callState === 'requesting-media' && !setupTriggered.current) {
       setupTriggered.current = true;
+      console.log('[VideoCallPage] Triggering outgoing call setup');
       setupOutgoingCall();
     }
   }, [callInfo, callState, setupOutgoingCall]);
@@ -52,6 +54,7 @@ const VideoCallPage = () => {
     const attachLocal = () => {
       if (localStream.current && localVideoRef.current) {
         localVideoRef.current.srcObject = localStream.current;
+        console.log('[VideoCallPage] Local stream attached');
       }
     };
 
@@ -60,21 +63,38 @@ const VideoCallPage = () => {
     return () => window.removeEventListener('local-stream-ready', attachLocal);
   }, [localStream, callState]);
 
-  // Attach remote video stream
+  // Attach remote video stream — listen for the custom event AND poll as fallback
   useEffect(() => {
-    const handleRemoteStream = (e) => {
-      if (remoteVideoRef.current && e.detail) {
-        remoteVideoRef.current.srcObject = e.detail;
+    const attachRemote = (stream) => {
+      if (remoteVideoRef.current && stream) {
+        remoteVideoRef.current.srcObject = stream;
+        setHasRemoteStream(true);
+        console.log('[VideoCallPage] Remote stream attached, tracks:', stream.getTracks().map(t => `${t.kind}:${t.readyState}`).join(', '));
       }
+    };
+
+    const handleRemoteStream = (e) => {
+      attachRemote(e.detail);
     };
 
     window.addEventListener('remote-stream-updated', handleRemoteStream);
 
-    if (remoteStream.current && remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = remoteStream.current;
+    // Also try to attach if the ref already has a stream
+    if (remoteStream.current) {
+      attachRemote(remoteStream.current);
     }
 
-    return () => window.removeEventListener('remote-stream-updated', handleRemoteStream);
+    // Polling fallback: check every 500ms in case the event was missed
+    const pollInterval = setInterval(() => {
+      if (remoteStream.current && remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
+        attachRemote(remoteStream.current);
+      }
+    }, 500);
+
+    return () => {
+      window.removeEventListener('remote-stream-updated', handleRemoteStream);
+      clearInterval(pollInterval);
+    };
   }, [remoteStream, callState]);
 
   // Duration timer when connected
@@ -134,7 +154,7 @@ const VideoCallPage = () => {
   const peerName = callInfo?.peerName || 'User';
   const peerInitials = peerName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
-  const showRemoteVideo = callState === 'connected' && isVideo;
+  const showRemoteVideo = callState === 'connected' && isVideo && hasRemoteStream;
   const isEnding = TERMINAL_STATES.has(callState);
 
   return (
@@ -154,6 +174,8 @@ const VideoCallPage = () => {
           <div className="vc-status-text">
             {callState === 'connected' && !isVideo ? (
               <span className="vc-duration">{formatDuration(duration)}</span>
+            ) : callState === 'connected' && isVideo && !hasRemoteStream ? (
+              <span>Waiting for video...</span>
             ) : (
               statusLabels[callState] || 'Connecting...'
             )}
@@ -174,7 +196,7 @@ const VideoCallPage = () => {
         </div>
       )}
 
-      {/* Local video preview (PiP) */}
+      {/* Local video preview (PiP) — show whenever we have a local stream */}
       {isVideo && localStream.current && (
         <div className="vc-local-pip">
           <video
@@ -190,6 +212,16 @@ const VideoCallPage = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Remote video ref for non-visible states (keep attached even when avatar shown) */}
+      {!showRemoteVideo && (
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          style={{ display: 'none' }}
+        />
       )}
 
       {/* Terminal state overlay */}

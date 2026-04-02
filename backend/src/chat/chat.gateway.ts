@@ -43,6 +43,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (socketId === client.id) {
         this.connectedUsers.delete(userId);
         this.server.emit('user-offline', { userId });
+        console.log(`👤 User ${userId} went offline (socket ${client.id} disconnected)`);
         break;
       }
     }
@@ -58,7 +59,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.connectedUsers.set(data.userId, client.id);
     client.join(`user_${data.userId}`);
     this.server.emit('user-online', { userId: data.userId });
-    console.log(`✅ User registered: ${data.userId} -> socket ${client.id}`);
+    console.log(`✅ User registered: ${data.userId} -> socket ${client.id} (total online: ${this.connectedUsers.size})`);
   }
 
   @SubscribeMessage('join-room')
@@ -229,9 +230,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       callerName: string;
     },
   ) {
-    if (!data?.to || !data?.from || !data?.offer) return;
+    if (!data?.to || !data?.from || !data?.offer) {
+      console.log('📞 call-user: missing data fields', { to: !!data?.to, from: !!data?.from, offer: !!data?.offer });
+      return;
+    }
+
+    console.log(`📞 call-user: ${data.from} -> ${data.to} (type: ${data.type}, caller: ${data.callerName})`);
+    console.log(`📞 Connected users:`, Array.from(this.connectedUsers.keys()).join(', '));
+
     const targetSocketId = this.connectedUsers.get(data.to);
     if (targetSocketId) {
+      console.log(`📞 Forwarding incoming-call to socket ${targetSocketId}`);
       this.server.to(targetSocketId).emit('incoming-call', {
         from: data.from,
         offer: data.offer,
@@ -239,6 +248,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         callerName: data.callerName,
       });
     } else {
+      console.log(`📞 Target user ${data.to} is NOT connected — sending call-unavailable`);
       client.emit('call-unavailable', { to: data.to });
     }
   }
@@ -248,13 +258,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { to: string; from: string; answer: any },
   ) {
-    if (!data?.to || !data?.answer) return;
+    if (!data?.to || !data?.answer) {
+      console.log('📞 call-accepted: missing data fields', { to: !!data?.to, answer: !!data?.answer });
+      return;
+    }
+
+    console.log(`📞 call-accepted: ${data.from} accepted call from ${data.to}`);
+
     const targetSocketId = this.connectedUsers.get(data.to);
     if (targetSocketId) {
+      console.log(`📞 Forwarding call-answered to socket ${targetSocketId}`);
       this.server.to(targetSocketId).emit('call-answered', {
         from: data.from,
         answer: data.answer,
       });
+    } else {
+      console.log(`📞 ❌ Caller ${data.to} is no longer connected!`);
+      // Notify the callee that the caller disconnected
+      client.emit('call-ended', { from: data.to });
     }
   }
 
@@ -264,6 +285,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { to: string; from: string },
   ) {
     if (!data?.to) return;
+    console.log(`📞 call-rejected: ${data.from} rejected call from ${data.to}`);
     const targetSocketId = this.connectedUsers.get(data.to);
     if (targetSocketId) {
       this.server.to(targetSocketId).emit('call-rejected', { from: data.from });
@@ -282,6 +304,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         from: data.from,
         candidate: data.candidate,
       });
+    } else {
+      console.log(`🧊 ICE candidate target ${data.to} not connected, dropping`);
     }
   }
 
@@ -291,6 +315,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { to: string; from: string },
   ) {
     if (!data?.to) return;
+    console.log(`📞 end-call: ${data.from} ending call with ${data.to}`);
     const targetSocketId = this.connectedUsers.get(data.to);
     if (targetSocketId) {
       this.server.to(targetSocketId).emit('call-ended', { from: data.from });
