@@ -212,8 +212,8 @@
 }
 
 /* Unselected states — dark backgrounds */
-.vibe-purple { background: var(--navy4); color: var(--text2); border-color: rgba(110,86,255,0.3); }
-.vibe-purple .vibe-check { border-color: rgba(110,86,255,0.4); background: var(--navy2); }
+.vibe-purple { background: var(--navy4); color: var(--text2); border-color: rgba(255,81,47,0.3); }
+.vibe-purple .vibe-check { border-color: rgba(255,81,47,0.4); background: var(--navy2); }
 
 .vibe-pink { background: var(--navy4); color: var(--text2); border-color: rgba(255,66,129,0.3); }
 .vibe-pink .vibe-check { border-color: rgba(255,66,129,0.4); background: var(--navy2); }

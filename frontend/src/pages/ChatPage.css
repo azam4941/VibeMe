@@ -313,7 +313,7 @@
   font-weight: 700;
   color: #fff;
   margin-bottom: 16px;
-  box-shadow: 0 0 40px rgba(110, 86, 255, 0.4);
+  box-shadow: 0 0 40px rgba(255, 81, 47, 0.4);
 }
 .vc-caller-name {
   font-family: var(--font-display);

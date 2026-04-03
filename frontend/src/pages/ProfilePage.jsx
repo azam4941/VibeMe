@@ -40,11 +40,11 @@ const ProfilePage = () => {
   };
 
   const menuItems = [
-    { icon: <User size={18} />, iconBg: 'rgba(110,86,255,0.15)', iconColor: '#9B8CFF', title: 'Edit Profile', sub: 'Name, bio, interests, photo', route: '/setup' },
+    { icon: <User size={18} />, iconBg: 'rgba(255,81,47,0.15)', iconColor: '#FF7B59', title: 'Edit Profile', sub: 'Name, bio, interests, photo', route: '/setup' },
     { icon: <Wallet size={18} />, iconBg: 'rgba(0,230,164,0.15)', iconColor: '#00E6A4', title: 'Wallet & Payments', sub: `Balance: ₹${user?.balance || '0'}`, route: '/wallet' },
     { icon: <Shield size={18} />, iconBg: 'rgba(255,66,129,0.15)', iconColor: '#FF4281', title: 'Privacy & Safety', sub: user?.isVerified ? 'Verified' : 'KYC Pending', route: '/notifications' },
     { icon: <BarChart3 size={18} />, iconBg: 'rgba(255,179,36,0.15)', iconColor: '#FFB324', title: 'Session History', sub: `${user?.totalSessions || 0} sessions completed`, route: '/bookings' },
-    { icon: <Users size={18} />, iconBg: 'rgba(110,86,255,0.15)', iconColor: '#9B8CFF', title: 'Refer & Earn', sub: 'Earn ₹50 per friend', route: '/notifications' },
+    { icon: <Users size={18} />, iconBg: 'rgba(255,81,47,0.15)', iconColor: '#FF7B59', title: 'Refer & Earn', sub: 'Earn ₹50 per friend', route: '/notifications' },
     { icon: <Settings size={18} />, iconBg: 'rgba(255,255,255,0.08)', iconColor: '#757599', title: 'Settings', sub: 'App preferences', route: '/notifications' },
   ];
 

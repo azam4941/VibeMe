@@ -219,15 +219,7 @@ const LoginPage = () => {
             By continuing, you agree to our <span>Terms of Service</span> and <span>Privacy Policy</span>
           </p>
 
-          <div className="social-sep">
-            <div className="sep-line" />
-            <span className="sep-text">or continue with</span>
-            <div className="sep-line" />
-          </div>
-          <div className="social-row">
-            <div className="social-btn">🌐 Google</div>
-            <div className="social-btn">📱 WhatsApp</div>
-          </div>
+
 
           <div className="login-secure">
             <ShieldCheck size={14} />
@@ -254,7 +246,7 @@ const LoginPage = () => {
         {backendOtp && (
           <div style={{
             textAlign: 'center', padding: '8px 16px', marginBottom: 12,
-            background: 'rgba(110,86,255,0.12)', borderRadius: 10, fontSize: 13,
+            background: 'rgba(255,81,47,0.12)', borderRadius: 10, fontSize: 13,
             color: 'var(--purple-light)', fontWeight: 600,
           }}>
             Dev OTP: {backendOtp}

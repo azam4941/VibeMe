@@ -25,7 +25,7 @@
   position: relative;
   transition: background 0.15s;
 }
-.notif-item:hover { background: rgba(110, 86, 255, 0.08); }
+.notif-item:hover { background: rgba(255, 81, 47, 0.08); }
 .notif-unread { border-left: 3px solid var(--purple); }
 
 .notif-dot {

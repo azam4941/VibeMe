@@ -6,16 +6,16 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Primary palette - Vibrant, glowing purples */
-  --purple: #6E56FF;
-  --purple-light: #9B8CFF;
-  --purple-pale: rgba(110, 86, 255, 0.12);
-  --purple-mid: #C6BEFF;
-  --purple-dark: #372A8C;
+  /* Primary palette - Sunset Orange / Crimson */
+  --purple: #FF512F;
+  --purple-light: #FF7B59;
+  --purple-pale: rgba(255, 81, 47, 0.12);
+  --purple-mid: #FFB399;
+  --purple-dark: #8C220E;
 
-  /* Accent colors - Neon tinted */
-  --pink: #FF4281;
-  --pink-pale: rgba(255, 66, 129, 0.12);
+  /* Accent colors - Warm & Neon */
+  --pink: #DD2476;
+  --pink-pale: rgba(221, 36, 118, 0.12);
   --teal: #00E6A4;
   --teal-pale: rgba(0, 230, 164, 0.12);
   --amber: #FFB324;
@@ -25,21 +25,21 @@
   --red: #FF3B5D;
   --green: #00E6A4;
 
-  /* Premium Dark Navy Surfaces - Deeper with radial tints */
-  --navy: #090914;
-  --navy2: #131322;
-  --navy3: #1B1B30;
-  --navy4: #252542;
+  /* Premium Dark Plum/Warm Surfaces */
+  --navy: #1A0B1C;
+  --navy2: #241326;
+  --navy3: #321A33;
+  --navy4: #432545;
 
   /* Light surfaces / Glassmorphism */
-  --bg: #0C0C18;
-  --card: rgba(19, 19, 34, 0.75);
-  --border: rgba(155, 140, 255, 0.15);
+  --bg: #1E0F21;
+  --card: rgba(36, 19, 38, 0.75);
+  --border: rgba(255, 123, 89, 0.15);
 
   /* Text - High contrast */
   --text1: #FFFFFF;
-  --text2: #B3B3D1;
-  --text3: #757599;
+  --text2: #FFDDCF;
+  --text3: #A68A8E;
 
   /* Fonts */
   --font-display: 'Syne', sans-serif;
@@ -53,13 +53,13 @@
   --radius-pill: 100px;
 
   /* Premium Shadows / Glows */
-  --shadow-sm: 0 4px 12px rgba(110, 86, 255, 0.15);
-  --shadow-md: 0 8px 32px rgba(110, 86, 255, 0.25);
-  --shadow-lg: 0 16px 48px rgba(110, 86, 255, 0.35);
+  --shadow-sm: 0 4px 12px rgba(255, 81, 47, 0.15);
+  --shadow-md: 0 8px 32px rgba(255, 81, 47, 0.25);
+  --shadow-lg: 0 16px 48px rgba(255, 81, 47, 0.35);
 
   /* Gradients */
-  --bg-gradient: radial-gradient(circle at 50% -20%, #1A1A3A 0%, var(--navy) 80%);
-  --btn-gradient: linear-gradient(135deg, #816BFF 0%, #5B40FF 100%);
+  --bg-gradient: radial-gradient(circle at 50% -20%, #3B1B2C 0%, var(--navy) 80%);
+  --btn-gradient: linear-gradient(135deg, #FF512F 0%, #DD2476 100%);
   --card-blur: blur(16px);
 
   /* Safe area */
