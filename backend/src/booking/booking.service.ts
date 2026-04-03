@@ -29,7 +29,7 @@ export class BookingService {
       throw new BadRequestException('This user is not available');
     }
 
-    if (renter.pricePerMinute <= 0) {
+    if (renter.pricePerMinute < 0) {
       throw new BadRequestException('Renter has not set a valid price');
     }
 
@@ -61,7 +61,7 @@ export class BookingService {
 
   async acceptSession(sessionId: string, renterId: string): Promise<SessionDocument> {
     const session = await this.findSessionById(sessionId);
-    if (session.renterId.toString() !== renterId) {
+    if ((session.renterId as any)._id.toString() !== renterId) {
       throw new ForbiddenException('Only the renter can accept this session');
     }
     if (session.status !== 'pending') {
@@ -78,7 +78,7 @@ export class BookingService {
 
     // Either party can start the session
     const isParticipant =
-      session.buyerId.toString() === userId || session.renterId.toString() === userId;
+      (session.buyerId as any)._id.toString() === userId || (session.renterId as any)._id.toString() === userId;
     if (!isParticipant) {
       throw new ForbiddenException('You are not a participant in this session');
     }
@@ -98,7 +98,7 @@ export class BookingService {
     const session = await this.findSessionById(sessionId);
 
     const isParticipant =
-      session.buyerId.toString() === userId || session.renterId.toString() === userId;
+      (session.buyerId as any)._id.toString() === userId || (session.renterId as any)._id.toString() === userId;
     if (!isParticipant) {
       throw new ForbiddenException('You are not a participant in this session');
     }
@@ -119,8 +119,8 @@ export class BookingService {
     await session.save();
 
     // Update user stats atomically
-    const buyerId = session.buyerId.toString();
-    const renterId = session.renterId.toString();
+    const buyerId = (session.buyerId as any)._id.toString();
+    const renterId = (session.renterId as any)._id.toString();
 
     await Promise.all([
       this.usersService.incrementSessions(buyerId),
@@ -138,7 +138,7 @@ export class BookingService {
     const session = await this.findSessionById(sessionId);
 
     const isParticipant =
-      session.buyerId.toString() === userId || session.renterId.toString() === userId;
+      (session.buyerId as any)._id.toString() === userId || (session.renterId as any)._id.toString() === userId;
     if (!isParticipant) {
       throw new ForbiddenException('You are not a participant in this session');
     }
