@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CallProvider, useCall } from './context/CallContext';
 import { AlertProvider } from './context/AlertContext';
@@ -22,8 +22,19 @@ import './App.css';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
-  if (loading) return <div className="loading-page"><div className="spinner" /><span className="logo">Vibe<span style={{color:'#AFA9EC'}}>Me</span></span></div>;
+  if (loading) return <div className="loading-page"><div className="spinner" /><span className="logo">Vibe<span style={{color:'#A78BFA'}}>Me</span></span></div>;
   return isAuthenticated ? children : <Navigate to="/login" />;
+}
+
+/* Redirect to /setup if profile is incomplete (bio-first onboarding) */
+function ProfileGuard({ children }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  const isProfileComplete = user && user.name && user.name !== 'New User' && user.bio && user.interests && user.interests.length > 0;
+  if (!isProfileComplete && location.pathname !== '/setup') {
+    return <Navigate to="/setup" replace />;
+  }
+  return children;
 }
 
 function AdminRoute({ children }) {
@@ -78,7 +89,7 @@ function AppRoutes() {
         <Route path="/login" element={isAuthenticated ? <Navigate to="/discover" /> : <LoginPage />} />
         <Route path="/setup" element={<ProtectedRoute><ProfileSetupPage /></ProtectedRoute>} />
 
-        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route path="/" element={<ProtectedRoute><ProfileGuard><Layout /></ProfileGuard></ProtectedRoute>}>
           <Route index element={<Navigate to="/discover" />} />
           <Route path="discover" element={<DiscoverPage />} />
           <Route path="profile" element={<ProfilePage />} />

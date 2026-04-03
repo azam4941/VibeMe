@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Post, Body, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Post, Delete, Body, Param, Req, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { UpdateProfileDto, SetPriceDto, SetAvailabilityDto, ToggleRentModeDto, BlockUserDto } from '../common/dto';
@@ -101,5 +101,25 @@ export class UsersController {
 
     const viewerIsVerified = req.user.isVerified || false;
     return this.usersService.getPublicProfile(user, viewerIsVerified);
+  }
+
+  // ───── Account Pause / Delete ─────
+
+  @UseGuards(JwtAuthGuard)
+  @Put('me/pause')
+  async pauseAccount(@Req() req) {
+    return this.usersService.pauseAccount(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('me/resume')
+  async resumeAccount(@Req() req) {
+    return this.usersService.resumeAccount(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('me')
+  async deleteAccount(@Req() req) {
+    return this.usersService.deleteAccount(req.user.userId);
   }
 }

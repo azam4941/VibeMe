@@ -101,6 +101,16 @@ export class User {
   @Prop({ default: '' })
   blockReason: string;
 
+  // ───── Account Status ─────
+  @Prop({ default: 'active', enum: ['active', 'paused', 'deleted'] })
+  accountStatus: string;
+
+  @Prop({ type: Date })
+  pausedAt: Date;
+
+  @Prop({ type: Date })
+  deletedAt: Date;
+
   // ───── Rent Mode ─────
   @Prop({ default: false })
   rentMode: boolean;
@@ -151,7 +161,8 @@ export class User {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 // Indexes for performance
-UserSchema.index({ rentMode: 1, isBlocked: 1, currentStatus: 1 });
+UserSchema.index({ rentMode: 1, isBlocked: 1, currentStatus: 1, accountStatus: 1 });
 UserSchema.index({ interests: 1 });
 UserSchema.index({ pricePerMinute: 1 });
 UserSchema.index({ rating: -1 });
+UserSchema.index({ accountStatus: 1 });

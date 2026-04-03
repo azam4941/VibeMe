@@ -15,8 +15,9 @@ const ProfileSetupPage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const { user, refreshUser } = useAuth();
+  const isFirstTime = !user?.bio && (!user?.interests || user?.interests?.length === 0);
   const [formStep, setFormStep] = useState(1);
-  const [name, setName] = useState(user?.name || '');
+  const [name, setName] = useState(user?.name === 'New User' ? '' : (user?.name || ''));
   const [bio, setBio] = useState(user?.bio || '');
   const [location, setLocation] = useState(user?.location || '');
   const [photo, setPhoto] = useState(user?.profilePhoto || '');
@@ -74,7 +75,7 @@ const ProfileSetupPage = () => {
 
   const handleBack = () => {
     if (formStep > 1) setFormStep(formStep - 1);
-    else navigate('/profile');
+    else if (!isFirstTime) navigate('/profile');
   };
 
   const validateStep1 = () => {
@@ -126,7 +127,7 @@ const ProfileSetupPage = () => {
       });
       await refreshUser();
       setSaveSuccess(true);
-      setTimeout(() => navigate('/profile'), 1000);
+      setTimeout(() => navigate('/discover'), 1000);
     } catch (err) {
       setSaveError(err.message || 'Failed to save profile. Please try again.');
     } finally {
@@ -138,15 +139,18 @@ const ProfileSetupPage = () => {
     <div className="setup-page">
       <div className="setup-header">
         <div className="setup-top-row">
-          <button className="back-btn" onClick={handleBack}><ArrowLeft size={20} /></button>
+          {(!isFirstTime || formStep > 1) && (
+            <button className="back-btn" onClick={handleBack}><ArrowLeft size={20} /></button>
+          )}
+          {isFirstTime && formStep === 1 && <div style={{ width: 36 }} />}
           <div className="setup-steps">
             {[1, 2, 3, 4].map(s => (
               <div key={s} className={`step-dot ${s < formStep ? 'done' : ''} ${s === formStep ? 'active' : ''}`} />
             ))}
           </div>
         </div>
-        <h2 className="setup-title">Set Up Your Profile</h2>
-        <p className="setup-sub">Step {formStep} of 4 — {
+        <h2 className="setup-title">{isFirstTime ? 'Welcome to VibeMe ✨' : 'Edit Your Profile'}</h2>
+        <p className="setup-sub">{isFirstTime ? `Let's set up your profile — Step ${formStep} of 4` : `Step ${formStep} of 4`} — {
           formStep === 1 ? 'Basic info' :
           formStep === 2 ? 'Tell us about yourself' :
           formStep === 3 ? 'Pick your vibes' :

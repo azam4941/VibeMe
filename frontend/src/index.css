@@ -1,45 +1,45 @@
 /* ============================================================
    VibeMe — Global Design System
-   Dark Navy + Purple Premium Theme
+   Midnight Purple Premium Theme
    ============================================================ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Primary palette - Sunset Orange / Crimson */
-  --purple: #FF512F;
-  --purple-light: #FF7B59;
-  --purple-pale: rgba(255, 81, 47, 0.12);
-  --purple-mid: #FFB399;
-  --purple-dark: #8C220E;
+  /* Primary palette - Midnight Purple */
+  --purple: #7B2FFF;
+  --purple-light: #A78BFA;
+  --purple-pale: rgba(123, 47, 255, 0.12);
+  --purple-mid: #C4B5FD;
+  --purple-dark: #4C1D95;
 
-  /* Accent colors - Warm & Neon */
-  --pink: #DD2476;
-  --pink-pale: rgba(221, 36, 118, 0.12);
+  /* Accent colors */
+  --pink: #9333EA;
+  --pink-pale: rgba(147, 51, 234, 0.12);
   --teal: #00E6A4;
   --teal-pale: rgba(0, 230, 164, 0.12);
   --amber: #FFB324;
   --amber-pale: rgba(255, 179, 36, 0.12);
-  --coral: #FF6647;
-  --coral-pale: rgba(255, 102, 71, 0.12);
+  --coral: #A855F7;
+  --coral-pale: rgba(168, 85, 247, 0.12);
   --red: #FF3B5D;
   --green: #00E6A4;
 
-  /* Premium Dark Plum/Warm Surfaces */
-  --navy: #1A0B1C;
-  --navy2: #241326;
-  --navy3: #321A33;
-  --navy4: #432545;
+  /* Premium Deep Purple Surfaces */
+  --navy: #0D0A1A;
+  --navy2: #141024;
+  --navy3: #1E1635;
+  --navy4: #2D2250;
 
   /* Light surfaces / Glassmorphism */
-  --bg: #1E0F21;
-  --card: rgba(36, 19, 38, 0.75);
-  --border: rgba(255, 123, 89, 0.15);
+  --bg: #100D1F;
+  --card: rgba(20, 16, 36, 0.85);
+  --border: rgba(123, 47, 255, 0.15);
 
   /* Text - High contrast */
   --text1: #FFFFFF;
-  --text2: #FFDDCF;
-  --text3: #A68A8E;
+  --text2: #D4D0E8;
+  --text3: #8B85A8;
 
   /* Fonts */
   --font-display: 'Syne', sans-serif;
@@ -52,14 +52,14 @@
   --radius-xl: 20px;
   --radius-pill: 100px;
 
-  /* Premium Shadows / Glows */
-  --shadow-sm: 0 4px 12px rgba(255, 81, 47, 0.15);
-  --shadow-md: 0 8px 32px rgba(255, 81, 47, 0.25);
-  --shadow-lg: 0 16px 48px rgba(255, 81, 47, 0.35);
+  /* Premium Shadows / Glows — purple-tinted */
+  --shadow-sm: 0 4px 12px rgba(123, 47, 255, 0.15);
+  --shadow-md: 0 8px 32px rgba(123, 47, 255, 0.25);
+  --shadow-lg: 0 16px 48px rgba(123, 47, 255, 0.35);
 
   /* Gradients */
-  --bg-gradient: radial-gradient(circle at 50% -20%, #3B1B2C 0%, var(--navy) 80%);
-  --btn-gradient: linear-gradient(135deg, #FF512F 0%, #DD2476 100%);
+  --bg-gradient: radial-gradient(circle at 50% -20%, #1E1040 0%, var(--navy) 80%);
+  --btn-gradient: linear-gradient(135deg, #7B2FFF 0%, #9333EA 100%);
   --card-blur: blur(16px);
 
   /* Safe area */
@@ -88,7 +88,7 @@ body {
   max-width: 480px; /* Mobile-first constraint */
   margin: 0 auto;
   background: var(--bg-gradient);
-  box-shadow: 0 0 100px rgba(0,0,0,0.5);
+  box-shadow: 0 0 100px rgba(123, 47, 255, 0.15);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -127,9 +127,6 @@ h4 { font-size: 13px; }
 .fw-700 { font-weight: 700; }
 .fw-800 { font-weight: 700; }
 
-/* ============================================================
-   Buttons
-   ============================================================ */
 /* ============================================================
    Global Alert / Toast
    ============================================================ */
@@ -174,6 +171,10 @@ h4 { font-size: 13px; }
   from { transform: translateY(-20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* ============================================================
+   Buttons
+   ============================================================ */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -203,13 +204,13 @@ h4 { font-size: 13px; }
 
 .btn-secondary {
   background: var(--purple-pale);
-  color: var(--purple);
+  color: var(--purple-light);
 }
-.btn-secondary:hover { background: #dddcf5; }
+.btn-secondary:hover { background: rgba(123, 47, 255, 0.2); }
 
 .btn-outline {
   background: transparent;
-  color: var(--purple);
+  color: var(--purple-light);
   border: 2px solid var(--purple);
 }
 
@@ -287,7 +288,7 @@ h4 { font-size: 13px; }
 .ig-label {
   font-size: 10px;
   font-weight: 600;
-  color: var(--purple);
+  color: var(--purple-light);
   letter-spacing: 0.5px;
   margin-bottom: 6px;
   text-transform: uppercase;
@@ -304,11 +305,11 @@ h4 { font-size: 13px; }
   padding: 4px 10px;
   border-radius: var(--radius-sm);
 }
-.tag-purple  { background: var(--purple-pale); color: var(--purple-dark); }
-.tag-pink    { background: var(--pink-pale);   color: #72243E; }
-.tag-teal    { background: var(--teal-pale);   color: #085041; }
-.tag-amber   { background: var(--amber-pale);  color: #633806; }
-.tag-coral   { background: var(--coral-pale);  color: #712B13; }
+.tag-purple  { background: var(--purple-pale); color: var(--purple-light); }
+.tag-pink    { background: var(--pink-pale);   color: #B06AE8; }
+.tag-teal    { background: var(--teal-pale);   color: #00E6A4; }
+.tag-amber   { background: var(--amber-pale);  color: #FFB324; }
+.tag-coral   { background: var(--coral-pale);  color: #A855F7; }
 
 /* ============================================================
    Cards
@@ -340,11 +341,11 @@ h4 { font-size: 13px; }
 .avatar-lg { width: 64px; height: 64px; font-size: 17px; }
 .avatar-xl { width: 80px; height: 80px; font-size: 22px; }
 
-.avatar-purple { background: var(--purple-pale); color: var(--purple-dark); }
-.avatar-pink   { background: var(--pink-pale);   color: #72243E; }
-.avatar-teal   { background: var(--teal-pale);   color: #085041; }
-.avatar-amber  { background: var(--amber-pale);  color: #633806; }
-.avatar-coral  { background: var(--coral-pale);   color: #712B13; }
+.avatar-purple { background: var(--purple-pale); color: var(--purple-light); }
+.avatar-pink   { background: var(--pink-pale);   color: #B06AE8; }
+.avatar-teal   { background: var(--teal-pale);   color: #00E6A4; }
+.avatar-amber  { background: var(--amber-pale);  color: #FFB324; }
+.avatar-coral  { background: var(--coral-pale);  color: #A855F7; }
 
 /* ============================================================
    Verified Badge
@@ -405,7 +406,7 @@ h4 { font-size: 13px; }
   gap: 3px;
   font-size: 9px;
   font-weight: 500;
-  color: #bbb;
+  color: var(--text3);
   cursor: pointer;
   text-decoration: none;
   transition: color 0.15s;
@@ -415,13 +416,13 @@ h4 { font-size: 13px; }
 }
 .bnav-item.active,
 .bnav-item.act {
-  color: var(--purple);
+  color: var(--purple-light);
 }
 .bnav-item .bnav-dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--purple);
+  background: var(--purple-light);
 }
 
 /* ============================================================
@@ -430,7 +431,7 @@ h4 { font-size: 13px; }
 .section-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--purple);
+  color: var(--purple-light);
   letter-spacing: 1px;
   text-transform: uppercase;
   margin-bottom: 10px;
@@ -453,18 +454,20 @@ h4 { font-size: 13px; }
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--navy3);
+  background: #fff;
   position: absolute;
   top: 3px;
   right: 3px;
   transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 .toggle-switch.off {
-  background: #ddd;
+  background: var(--navy4);
 }
 .toggle-switch.off .toggle-thumb {
   right: auto;
   left: 3px;
+  background: var(--text3);
 }
 
 /* ============================================================
@@ -508,7 +511,7 @@ h4 { font-size: 13px; }
 .form-error {
   font-size: 12px;
   color: var(--red);
-  background: #fef2f2;
+  background: rgba(255, 59, 93, 0.1);
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   margin: 8px 0;

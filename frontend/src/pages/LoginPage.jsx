@@ -152,9 +152,9 @@ const LoginPage = () => {
         <div className="splash-content">
           <div className="splash-icon">
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <circle cx="20" cy="20" r="18" stroke="#7F77DD" strokeWidth="2"/>
-              <path d="M12 20c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" stroke="#AFA9EC" strokeWidth="2.5" strokeLinecap="round"/>
-              <circle cx="20" cy="20" r="3" fill="#7F77DD"/>
+              <circle cx="20" cy="20" r="18" stroke="#7B2FFF" strokeWidth="2"/>
+              <path d="M12 20c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" stroke="#A78BFA" strokeWidth="2.5" strokeLinecap="round"/>
+              <circle cx="20" cy="20" r="3" fill="#7B2FFF"/>
             </svg>
           </div>
           <h1 className="splash-logo">Vibe<span>Me</span></h1>
@@ -170,7 +170,7 @@ const LoginPage = () => {
             Get Started
           </button>
           <p className="splash-signin" onClick={() => setStep(1)}>
-            Already have account? <span style={{color:'var(--purple-light)', fontWeight:700}}>Sign In</span>
+            Already have account? <span style={{color:'#A78BFA', fontWeight:700}}>Sign In</span>
           </p>
         </div>
         <div className="splash-footer">
@@ -246,8 +246,8 @@ const LoginPage = () => {
         {backendOtp && (
           <div style={{
             textAlign: 'center', padding: '8px 16px', marginBottom: 12,
-            background: 'rgba(255,81,47,0.12)', borderRadius: 10, fontSize: 13,
-            color: 'var(--purple-light)', fontWeight: 600,
+            background: 'rgba(123,47,255,0.12)', borderRadius: 10, fontSize: 13,
+            color: '#A78BFA', fontWeight: 600,
           }}>
             Dev OTP: {backendOtp}
           </div>

@@ -116,7 +116,7 @@ export class UsersService {
     page?: number;
     limit?: number;
   }): Promise<{ users: UserDocument[]; total: number; page: number; totalPages: number }> {
-    const query: any = { isBlocked: { $ne: true } };
+    const query: any = { isBlocked: { $ne: true }, accountStatus: { $nin: ['paused', 'deleted'] } };
 
     if (filters.interests && filters.interests.length > 0) {
       query.interests = { $in: filters.interests };
@@ -301,5 +301,44 @@ export class UsersService {
       this.userModel.countDocuments({ currentStatus: 'online' }),
     ]);
     return { total, verified, renters, blocked, online };
+  }
+
+  // ───── Account Pause / Delete ─────
+
+  async pauseAccount(userId: string): Promise<UserDocument> {
+    const user = await this.findById(userId);
+    user.accountStatus = 'paused';
+    user.pausedAt = new Date();
+    user.currentStatus = 'offline';
+    user.rentMode = false;
+    return user.save();
+  }
+
+  async resumeAccount(userId: string): Promise<UserDocument> {
+    const user = await this.findById(userId);
+    if (user.accountStatus !== 'paused') {
+      throw new BadRequestException('Account is not paused');
+    }
+    user.accountStatus = 'active';
+    user.pausedAt = undefined;
+    return user.save();
+  }
+
+  async deleteAccount(userId: string): Promise<{ message: string }> {
+    const user = await this.findById(userId);
+    // Soft delete: anonymize personal data but keep the record
+    user.accountStatus = 'deleted';
+    user.deletedAt = new Date();
+    user.name = 'Deleted User';
+    user.bio = '';
+    user.profilePhoto = '';
+    user.interests = [];
+    user.findInterests = [];
+    user.professionalInterests = [];
+    user.location = '';
+    user.currentStatus = 'offline';
+    user.rentMode = false;
+    await user.save();
+    return { message: 'Account deleted successfully' };
   }
 }
