@@ -3,6 +3,7 @@ import { MongooseModule, InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -34,6 +35,7 @@ import { NotificationsModule } from './notifications/notification.module';
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60000, limit: 200 }],
     }),
+    EventEmitterModule.forRoot(),
 
     // Feature modules
     AuthModule,

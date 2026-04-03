@@ -52,15 +52,26 @@ export class ChatService {
       .exec();
   }
 
-  async getUserRooms(userId: string): Promise<ChatRoomDocument[]> {
-    return this.chatRoomModel
+  async getUserRooms(userId: string): Promise<any[]> {
+    const rooms = await this.chatRoomModel
       .find({
         participants: new Types.ObjectId(userId),
         isBlocked: false,
       })
       .sort({ lastMessageAt: -1 })
       .populate('participants', 'name profilePhoto isVerified currentStatus')
+      .lean()
       .exec();
+
+    // Add unread count to each room
+    return Promise.all(rooms.map(async (room) => {
+      const unreadCount = await this.messageModel.countDocuments({
+        roomId: room._id,
+        receiverId: new Types.ObjectId(userId),
+        isRead: false,
+      });
+      return { ...room, unreadCount };
+    }));
   }
 
   async getRoomById(roomId: string, userId: string): Promise<ChatRoomDocument> {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCall } from '../context/CallContext';
+import { useNotifications } from '../context/NotificationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, ChevronLeft, UserCircle2, Info,
@@ -19,6 +20,7 @@ const ChatPage = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { initiateCall } = useCall();
+  const { setActiveRoomId, refreshCounts } = useNotifications();
   const userId = user?._id;
 
   const [rooms, setRooms] = useState([]);
@@ -152,11 +154,13 @@ const ChatPage = () => {
 
     fetchMessages(roomId);
     socketService.joinRoom(roomId);
-    api.markAsRead(roomId).catch(() => {});
+    setActiveRoomId(roomId);
+    api.markAsRead(roomId).then(() => refreshCounts()).catch(() => {});
     socketService.markRead(roomId, userId);
 
     return () => {
       socketService.leaveRoom(roomId);
+      setActiveRoomId(null);
       setMessages([]);
     };
   }, [roomId, userId]);
@@ -207,7 +211,12 @@ const ChatPage = () => {
 
       setRooms(prev => prev.map(r =>
         r._id === msgRoomId
-          ? { ...r, lastMessage: msg.message, lastMessageAt: msg.timestamp || msg.createdAt }
+          ? { 
+              ...r, 
+              lastMessage: msg.message, 
+              lastMessageAt: msg.timestamp || msg.createdAt,
+              unreadCount: (r.unreadCount || 0) + (msgRoomId === currentRoomRef.current ? 0 : 1)
+            }
           : r
       ).sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)));
     };
@@ -450,12 +459,15 @@ const ChatPage = () => {
                     <div className="room-info">
                       <div className="room-top">
                         <span className="room-name">{displayName}</span>
-                        {room.lastMessageAt && (
-                          <span className="room-time">{formatTime(room.lastMessageAt)}</span>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {room.unreadCount > 0 && <span className="room-unread-count">{room.unreadCount}</span>}
+                          {room.lastMessageAt && (
+                            <span className="room-time">{formatTime(room.lastMessageAt)}</span>
+                          )}
+                        </div>
                       </div>
                       <div className="room-bottom">
-                        <p className="room-preview line-clamp-1 text-sm text-muted">
+                        <p className={`room-preview line-clamp-1 text-sm ${room.unreadCount > 0 ? 'text-primary font-bold' : 'text-muted'}`}>
                           {room.lastMessage || 'No messages yet'}
                         </p>
                       </div>

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Model, Types } from 'mongoose';
 import { Notification, NotificationDocument } from './notification.schema';
 
@@ -7,6 +8,7 @@ import { Notification, NotificationDocument } from './notification.schema';
 export class NotificationService {
   constructor(
     @InjectModel(Notification.name) private notifModel: Model<NotificationDocument>,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -16,7 +18,7 @@ export class NotificationService {
     body: string,
     data: Record<string, any> = {},
   ): Promise<NotificationDocument> {
-    return this.notifModel.create({
+    const notif = await this.notifModel.create({
       userId: new Types.ObjectId(userId),
       type,
       title,
@@ -24,6 +26,8 @@ export class NotificationService {
       data,
       isRead: false,
     });
+    this.eventEmitter.emit('notification.created', notif);
+    return notif;
   }
 
   async getUserNotifications(userId: string, limit = 50) {

@@ -7,6 +7,7 @@ import {
   ConnectedSocket,
   MessageBody,
 } from '@nestjs/websockets';
+import { OnEvent } from '@nestjs/event-emitter';
 import { Server, Socket } from 'socket.io';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -138,7 +139,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Create notification in DB
       try {
-        await this.notificationService.notifyNewMessage(data.receiverId, 'Someone');
+        const senderName = (populated as any)?.senderId?.name || 'Someone';
+        await this.notificationService.notifyNewMessage(data.receiverId, senderName);
       } catch (e) {
         console.error('Failed to create notification:', e.message);
       }
@@ -320,5 +322,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (targetSocketId) {
       this.server.to(targetSocketId).emit('call-ended', { from: data.from });
     }
+  }
+
+  @OnEvent('notification.created')
+  handleNotificationCreated(notif: any) {
+    const userId = notif.userId.toString();
+    console.log(`📡 Emitting new-notification to user_${userId}`);
+    this.server.to(`user_${userId}`).emit('new-notification', notif);
   }
 }

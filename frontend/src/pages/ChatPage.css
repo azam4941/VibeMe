@@ -71,7 +71,21 @@
 .room-top { display: flex; justify-content: space-between; align-items: center; }
 .room-name { font-size: 13px; font-weight: 600; color: var(--text1); }
 .room-time { font-size: 9px; color: var(--text3); }
+.room-unread-count {
+  background: var(--teal);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
 .room-preview { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.font-bold { font-weight: 700; color: #fff !important; }
 
 /* Main Chat */
 .chat-main {

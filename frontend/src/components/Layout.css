@@ -147,3 +147,22 @@
 }
 .ic-btn.ic-reject > svg { background: var(--red); }
 .ic-btn.ic-accept > svg { background: var(--teal); animation: icBounce 1.5s ease infinite; }
+
+.nav-badge {
+  position: absolute;
+  top: 4px;
+  right: 25%;
+  background: var(--red);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  padding-bottom: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--navy2);
+  z-index: 10;
+}

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CallProvider, useCall } from './context/CallContext';
 import { AlertProvider } from './context/AlertContext';
+import { NotificationProvider } from './context/NotificationContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import ProfileSetupPage from './pages/ProfileSetupPage';
@@ -103,9 +104,11 @@ function AppRoutes() {
 
 function AuthenticatedApp() {
   return (
-    <CallProvider>
-      <AppRoutes />
-    </CallProvider>
+    <NotificationProvider>
+      <CallProvider>
+        <AppRoutes />
+      </CallProvider>
+    </NotificationProvider>
   );
 }
 

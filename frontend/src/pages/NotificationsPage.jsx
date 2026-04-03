@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck, Trash2, MessageSquare, DollarSign, Star, Eye, Calendar, Zap } from 'lucide-react';
 import api from '../services/api';
+import socketService from '../services/socket';
 import './NotificationsPage.css';
 
 const typeIcons = {
@@ -45,9 +46,17 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     fetchNotifications();
-    // Poll every 30s
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    
+    const handleNewNotif = () => fetchNotifications();
+    socketService._on('new-notification', handleNewNotif);
+
+    // Keep polling as backup (but less frequent)
+    const interval = setInterval(fetchNotifications, 60000);
+    
+    return () => {
+      clearInterval(interval);
+      socketService._off('new-notification', handleNewNotif);
+    };
   }, [fetchNotifications]);
 
   const handleMarkAllRead = async () => {
