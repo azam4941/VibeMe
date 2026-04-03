@@ -1,0 +1,228 @@
+/* ============================================================
+   Account Settings Modal — Midnight Purple Premium
+   ============================================================ */
+.asm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: asmFadeIn 0.25s ease;
+}
+
+@keyframes asmFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.asm-modal {
+  width: 100%;
+  max-width: 480px;
+  background: var(--navy2);
+  border-radius: 24px 24px 0 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  animation: asmSlideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+@keyframes asmSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.asm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 0;
+}
+
+.asm-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.asm-close {
+  background: var(--navy3);
+  border: none;
+  color: var(--text3);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.asm-close:hover {
+  background: var(--navy4);
+  color: #fff;
+}
+
+.asm-body {
+  padding: 20px;
+}
+
+/* Section */
+.asm-section {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.asm-section-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.asm-section-icon.pause {
+  background: rgba(123, 47, 255, 0.15);
+  color: var(--purple-light);
+}
+
+.asm-section-icon.delete {
+  background: rgba(255, 59, 93, 0.12);
+  color: var(--red);
+}
+
+.asm-section-content h4 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.asm-section-content p {
+  font-size: 13px;
+  color: var(--text3);
+  line-height: 1.5;
+}
+
+.asm-section.danger .asm-section-content h4 {
+  color: var(--red);
+}
+
+/* Buttons */
+.asm-btn-pause {
+  background: var(--purple-pale) !important;
+  color: var(--purple-light) !important;
+  font-weight: 700;
+  border: 1px solid rgba(123, 47, 255, 0.25);
+}
+.asm-btn-pause:hover {
+  background: rgba(123, 47, 255, 0.2) !important;
+}
+
+.asm-btn-resume {
+  background: var(--btn-gradient) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.asm-btn-delete {
+  margin-top: 4px;
+  opacity: 0.9;
+}
+.asm-btn-delete:hover {
+  opacity: 1;
+}
+
+.asm-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0;
+}
+
+/* Delete Confirmation */
+.asm-confirm-delete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.asm-danger-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 59, 93, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red);
+  margin-bottom: 16px;
+  animation: asmPulse 2s ease infinite;
+}
+
+@keyframes asmPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 93, 0.3); }
+  50% { box-shadow: 0 0 0 12px rgba(255, 59, 93, 0); }
+}
+
+.asm-danger-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--red);
+  margin-bottom: 8px;
+}
+
+.asm-danger-text {
+  font-size: 13px;
+  color: var(--text3);
+  line-height: 1.6;
+  margin-bottom: 20px;
+  max-width: 320px;
+}
+
+.asm-danger-input-group {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.asm-danger-input {
+  width: 100%;
+  background: var(--navy3);
+  border: 2px solid rgba(255, 59, 93, 0.3);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  font-size: 16px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--red);
+  text-align: center;
+  letter-spacing: 4px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.asm-danger-input:focus {
+  border-color: var(--red);
+}
+.asm-danger-input::placeholder {
+  color: rgba(255, 59, 93, 0.3);
+  letter-spacing: 4px;
+}
+
+.asm-danger-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+.asm-danger-actions .flex-1 { flex: 1; }
+.asm-danger-actions .flex-2 { flex: 2; }

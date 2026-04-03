@@ -1,13 +1,13 @@
-/* ProfilePage.css — VibeMe My Profile */
+/* ProfilePage.css — VibeMe My Profile — Midnight Purple */
 .myprofile-page .mp-hero { padding-bottom: 20px; }
 
 .mp-top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .mp-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: #fff; }
-.mp-edit { font-size: 14px; color: var(--purple-mid); font-weight: 600; cursor: pointer; }
+.mp-edit { font-size: 14px; color: var(--purple-light); font-weight: 600; cursor: pointer; }
 
 .mp-card { display: flex; align-items: center; gap: 14px; }
 .mp-meta .mp-name { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; }
-.mp-meta .mp-phone { font-size: 14px; color: #999; margin-top: 2px; }
+.mp-meta .mp-phone { font-size: 14px; color: var(--text3); margin-top: 2px; }
 .mp-verified-badge {
   display: inline-flex; align-items: center; gap: 4px;
   background: var(--teal-pale); border-radius: 6px; padding: 3px 8px; margin-top: 4px;
@@ -56,9 +56,40 @@
   text-align: center; border: 1px solid var(--navy4);
 }
 .mps-num { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: #fff; }
-.mps-label { font-size: 12px; color: #888; margin-top: 2px; }
+.mps-label { font-size: 12px; color: var(--text3); margin-top: 2px; }
 
 .mp-body { padding: 16px 18px 100px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Paused Banner */
+.mp-paused-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(123, 47, 255, 0.12);
+  border: 1px solid rgba(123, 47, 255, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: var(--purple-light);
+  font-weight: 500;
+  animation: fadeIn 0.4s ease;
+}
+.mp-resume-btn {
+  margin-left: auto;
+  background: var(--btn-gradient);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.mp-resume-btn:active { transform: scale(0.95); }
 
 /* Rent Banner */
 .mp-rent-banner { padding: 14px 16px; }
@@ -74,12 +105,13 @@
 
 /* Menu */
 .mp-menu { overflow: hidden; }
+.mp-account-section { overflow: hidden; }
 .mp-menu-item {
   display: flex; align-items: center; gap: 12px; padding: 14px 16px;
   border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s;
 }
 .mp-menu-item:last-child { border-bottom: none; }
-.mp-menu-item:hover { background: var(--bg); }
+.mp-menu-item:hover { background: rgba(123, 47, 255, 0.05); }
 .mmi-icon {
   width: 36px; height: 36px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -87,9 +119,9 @@
 .mmi-text { flex: 1; }
 .mmi-title { font-size: 15px; font-weight: 600; color: var(--text1); }
 .mmi-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
-.mmi-arrow { color: #ccc; }
+.mmi-arrow { color: var(--text3); }
 .mmi-badge {
-  font-size: 11px; background: var(--purple-pale); color: var(--purple);
+  font-size: 11px; background: var(--purple-pale); color: var(--purple-light);
   padding: 3px 10px; border-radius: 6px; font-weight: 700;
 }
 
@@ -97,4 +129,4 @@
 .mp-signout {
   padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer;
 }
-.mp-signout:hover { background: rgba(255,59,93,0.1); }
+.mp-signout:hover { background: rgba(255,59,93,0.08); }

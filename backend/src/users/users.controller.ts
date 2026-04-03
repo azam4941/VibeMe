@@ -85,24 +85,6 @@ export class UsersController {
     return this.usersService.withdrawFunds(req.user.userId, dto.amount);
   }
 
-  // ───── Public profile — photo visibility depends on viewer verification ─────
-
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  async getUserById(@Param('id') id: string, @Req() req) {
-    const user = await this.usersService.findById(id);
-
-    // Check if the viewer has blocked or been blocked by this user
-    const viewerBlocked = await this.usersService.isBlockedByUser(req.user.userId, id);
-    const targetBlocked = await this.usersService.isBlockedByUser(id, req.user.userId);
-    if (viewerBlocked || targetBlocked) {
-      return { error: 'User not available', _id: id };
-    }
-
-    const viewerIsVerified = req.user.isVerified || false;
-    return this.usersService.getPublicProfile(user, viewerIsVerified);
-  }
-
   // ───── Account Pause / Delete ─────
 
   @UseGuards(JwtAuthGuard)
@@ -121,5 +103,23 @@ export class UsersController {
   @Delete('me')
   async deleteAccount(@Req() req) {
     return this.usersService.deleteAccount(req.user.userId);
+  }
+
+  // ───── Public profile — photo visibility depends on viewer verification ─────
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getUserById(@Param('id') id: string, @Req() req) {
+    const user = await this.usersService.findById(id);
+
+    // Check if the viewer has blocked or been blocked by this user
+    const viewerBlocked = await this.usersService.isBlockedByUser(req.user.userId, id);
+    const targetBlocked = await this.usersService.isBlockedByUser(id, req.user.userId);
+    if (viewerBlocked || targetBlocked) {
+      return { error: 'User not available', _id: id };
+    }
+
+    const viewerIsVerified = req.user.isVerified || false;
+    return this.usersService.getPublicProfile(user, viewerIsVerified);
   }
 }

@@ -15,7 +15,7 @@
 .sc {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(127, 119, 221, 0.12);
+  border: 1px solid rgba(123, 47, 255, 0.12);
 }
 .sc1 { width: 280px; height: 280px; top: -60px; right: -80px; }
 .sc2 { width: 180px; height: 180px; bottom: 80px; left: -60px; }
@@ -232,7 +232,7 @@
 }
 .otp-box:focus, .otp-box.active {
   border-color: var(--purple-light);
-  box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.15);
+  box-shadow: 0 0 0 3px rgba(123, 47, 255, 0.15);
 }
 .otp-box.filled {
   border-color: var(--purple);

@@ -3,15 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   User, Wallet, Shield, BarChart3, Users, Settings, LogOut,
-  ChevronRight, CheckCircle, MapPin, Star,
+  ChevronRight, CheckCircle, MapPin, Star, PauseCircle, Trash2, Play,
 } from 'lucide-react';
 import api from '../services/api';
+import AccountSettingsModal from '../components/AccountSettingsModal';
 import './ProfilePage.css';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, logout, refreshUser, updateLocalUser } = useAuth();
   const [toggling, setToggling] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [accountLoading, setAccountLoading] = useState(false);
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -39,13 +42,53 @@ const ProfilePage = () => {
     }
   };
 
+  const handlePauseAccount = async () => {
+    setAccountLoading(true);
+    try {
+      await api.pauseAccount();
+      await refreshUser();
+      setShowAccountModal(false);
+    } catch (err) {
+      console.error('Pause failed:', err);
+    } finally {
+      setAccountLoading(false);
+    }
+  };
+
+  const handleResumeAccount = async () => {
+    setAccountLoading(true);
+    try {
+      await api.resumeAccount();
+      await refreshUser();
+      setShowAccountModal(false);
+    } catch (err) {
+      console.error('Resume failed:', err);
+    } finally {
+      setAccountLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setAccountLoading(true);
+    try {
+      await api.deleteAccount();
+      logout();
+    } catch (err) {
+      console.error('Delete failed:', err);
+    } finally {
+      setAccountLoading(false);
+    }
+  };
+
+  const isPaused = user?.accountStatus === 'paused';
+
   const menuItems = [
-    { icon: <User size={18} />, iconBg: 'rgba(255,81,47,0.15)', iconColor: '#FF7B59', title: 'Edit Profile', sub: 'Name, bio, interests, photo', route: '/setup' },
+    { icon: <User size={18} />, iconBg: 'rgba(123,47,255,0.15)', iconColor: '#A78BFA', title: 'Edit Profile', sub: 'Name, bio, interests, photo', route: '/setup' },
     { icon: <Wallet size={18} />, iconBg: 'rgba(0,230,164,0.15)', iconColor: '#00E6A4', title: 'Wallet & Payments', sub: `Balance: ₹${user?.balance || '0'}`, route: '/wallet' },
-    { icon: <Shield size={18} />, iconBg: 'rgba(255,66,129,0.15)', iconColor: '#FF4281', title: 'Privacy & Safety', sub: user?.isVerified ? 'Verified' : 'KYC Pending', route: '/notifications' },
+    { icon: <Shield size={18} />, iconBg: 'rgba(147,51,234,0.15)', iconColor: '#A855F7', title: 'Privacy & Safety', sub: user?.isVerified ? 'Verified' : 'KYC Pending', route: '/notifications' },
     { icon: <BarChart3 size={18} />, iconBg: 'rgba(255,179,36,0.15)', iconColor: '#FFB324', title: 'Session History', sub: `${user?.totalSessions || 0} sessions completed`, route: '/bookings' },
-    { icon: <Users size={18} />, iconBg: 'rgba(255,81,47,0.15)', iconColor: '#FF7B59', title: 'Refer & Earn', sub: 'Earn ₹50 per friend', route: '/notifications' },
-    { icon: <Settings size={18} />, iconBg: 'rgba(255,255,255,0.08)', iconColor: '#757599', title: 'Settings', sub: 'App preferences', route: '/notifications' },
+    { icon: <Users size={18} />, iconBg: 'rgba(123,47,255,0.15)', iconColor: '#A78BFA', title: 'Refer & Earn', sub: 'Earn ₹50 per friend', route: '/notifications' },
+    { icon: <Settings size={18} />, iconBg: 'rgba(255,255,255,0.08)', iconColor: '#8B85A8', title: 'Settings', sub: 'App preferences', route: '/notifications' },
   ];
 
   return (
@@ -55,6 +98,15 @@ const ProfilePage = () => {
           <h2 className="mp-title">My Profile</h2>
           <span className="mp-edit" onClick={() => navigate('/setup')}>Edit</span>
         </div>
+
+        {isPaused && (
+          <div className="mp-paused-banner">
+            <PauseCircle size={16} />
+            <span>Your account is paused — you're hidden from discovery</span>
+            <button className="mp-resume-btn" onClick={handleResumeAccount}>Resume</button>
+          </div>
+        )}
+
         <div className="mp-card">
           <div className="mp-avatar avatar avatar-lg avatar-purple"
             style={{
@@ -110,7 +162,7 @@ const ProfilePage = () => {
             <div className="mps-label">Sessions</div>
           </div>
           <div className="mps">
-            <div className="mps-num" style={{ color: 'var(--purple-mid)' }}>
+            <div className="mps-num" style={{ color: 'var(--purple-light)' }}>
               <Star size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} />
               {user?.rating?.toFixed(1) || '—'}
             </div>
@@ -156,11 +208,45 @@ const ProfilePage = () => {
           ))}
         </div>
 
+        {/* Account Management */}
+        <div className="mp-account-section card">
+          <div className="mp-menu-item" onClick={() => setShowAccountModal(true)}>
+            <div className="mmi-icon" style={{ background: 'rgba(123,47,255,0.12)' }}>
+              {isPaused ? <Play size={18} color="#A78BFA" /> : <PauseCircle size={18} color="#A78BFA" />}
+            </div>
+            <div className="mmi-text">
+              <div className="mmi-title">{isPaused ? 'Resume Account' : 'Pause Account'}</div>
+              <div className="mmi-sub">{isPaused ? 'Your profile is currently hidden' : 'Temporarily hide from discovery'}</div>
+            </div>
+            <ChevronRight size={18} className="mmi-arrow" />
+          </div>
+          <div className="mp-menu-item" onClick={() => setShowAccountModal(true)}>
+            <div className="mmi-icon" style={{ background: 'rgba(255,59,93,0.12)' }}>
+              <Trash2 size={18} color="var(--red)" />
+            </div>
+            <div className="mmi-text">
+              <div className="mmi-title" style={{ color: 'var(--red)' }}>Delete Account</div>
+              <div className="mmi-sub">Permanently remove your account</div>
+            </div>
+            <ChevronRight size={18} className="mmi-arrow" />
+          </div>
+        </div>
+
         <div className="mp-signout card" onClick={handleLogout}>
           <div className="mmi-icon" style={{ background: 'rgba(255,59,93,0.12)' }}><LogOut size={18} color="var(--red)" /></div>
           <div className="mmi-text"><div className="mmi-title" style={{ color: 'var(--red)' }}>Sign Out</div></div>
         </div>
       </div>
+
+      <AccountSettingsModal
+        isOpen={showAccountModal}
+        onClose={() => setShowAccountModal(false)}
+        onPause={handlePauseAccount}
+        onResume={handleResumeAccount}
+        onDelete={handleDeleteAccount}
+        isPaused={isPaused}
+        loading={accountLoading}
+      />
     </div>
   );
 };

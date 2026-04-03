@@ -343,6 +343,19 @@ class ApiService {
   deleteNotif(id) {
     return this.request(`/notifications/${id}`, { method: 'DELETE' });
   }
+
+  // Account Management
+  pauseAccount() {
+    return this.request('/users/me/pause', { method: 'PUT' });
+  }
+
+  resumeAccount() {
+    return this.request('/users/me/resume', { method: 'PUT' });
+  }
+
+  deleteAccount() {
+    return this.request('/users/me', { method: 'DELETE' });
+  }
 }
 
 export const api = new ApiService();
