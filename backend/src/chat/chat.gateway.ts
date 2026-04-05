@@ -249,9 +249,31 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         type: data.type,
         callerName: data.callerName,
       });
+
+      // Create an incoming call notification in the DB
+      try {
+        this.notificationService.notifyIncomingCall(
+          data.to,
+          data.callerName || 'Someone',
+          data.type || 'voice',
+        );
+      } catch (e) {
+        console.error('Failed to create call notification:', e.message);
+      }
     } else {
       console.log(`📞 Target user ${data.to} is NOT connected — sending call-unavailable`);
       client.emit('call-unavailable', { to: data.to });
+
+      // Create a missed call notification in the DB
+      try {
+        this.notificationService.notifyMissedCall(
+          data.to,
+          data.callerName || 'Someone',
+          data.type || 'voice',
+        );
+      } catch (e) {
+        console.error('Failed to create missed call notification:', e.message);
+      }
     }
   }
 

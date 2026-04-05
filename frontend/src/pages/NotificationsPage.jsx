@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck, Trash2, MessageSquare, DollarSign, Star, Eye, Calendar, Zap } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, MessageSquare, DollarSign, Star, Eye, Calendar, Zap, Phone, PhoneMissed } from 'lucide-react';
 import api from '../services/api';
 import socketService from '../services/socket';
 import './NotificationsPage.css';
@@ -12,6 +12,8 @@ const typeIcons = {
   reveal_request: <Eye size={18} />,
   review: <Star size={18} />,
   video_call: <Zap size={18} />,
+  incoming_call: <Phone size={18} />,
+  missed_call: <PhoneMissed size={18} />,
   system: <Bell size={18} />,
 };
 
@@ -22,6 +24,8 @@ const typeColors = {
   reveal_request: 'var(--pink)',
   review: 'var(--coral)',
   video_call: 'var(--teal)',
+  incoming_call: 'var(--teal)',
+  missed_call: 'var(--red)',
   system: 'var(--purple-mid)',
 };
 
@@ -99,6 +103,8 @@ const NotificationsPage = () => {
       reveal_request: '/chat',
       review: '/profile',
       video_call: '/chat',
+      incoming_call: '/chat',
+      missed_call: '/chat',
     };
     const route = n.data?.screen ? `/${n.data.screen.toLowerCase()}` : routes[n.type];
     if (route) navigate(route);

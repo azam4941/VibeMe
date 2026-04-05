@@ -111,4 +111,24 @@ export class NotificationService {
       { screen: 'Profile' },
     );
   }
+
+  async notifyIncomingCall(receiverId: string, callerName: string, callType: string) {
+    return this.create(
+      receiverId,
+      'incoming_call',
+      `Incoming ${callType === 'video' ? 'Video' : 'Voice'} Call`,
+      `${callerName} is calling you`,
+      { screen: 'Chat', callType },
+    );
+  }
+
+  async notifyMissedCall(receiverId: string, callerName: string, callType: string) {
+    return this.create(
+      receiverId,
+      'missed_call',
+      'Missed Call',
+      `You missed a ${callType === 'video' ? 'video' : 'voice'} call from ${callerName}`,
+      { screen: 'Chat', callType },
+    );
+  }
 }

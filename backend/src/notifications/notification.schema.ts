@@ -8,7 +8,7 @@ export class Notification {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   userId: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['new_message', 'session_booked', 'payment', 'reveal_request', 'review', 'system', 'video_call'] })
+  @Prop({ required: true, enum: ['new_message', 'session_booked', 'payment', 'reveal_request', 'review', 'system', 'video_call', 'incoming_call', 'missed_call'] })
   type: string;
 
   @Prop({ required: true })

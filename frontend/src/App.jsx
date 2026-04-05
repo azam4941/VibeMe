@@ -3,7 +3,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { CallProvider, useCall } from './context/CallContext';
 import { AlertProvider } from './context/AlertContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
+import NotificationToast from './components/NotificationToast';
 import LoginPage from './pages/LoginPage';
 import ProfileSetupPage from './pages/ProfileSetupPage';
 import DiscoverPage from './pages/DiscoverPage';
@@ -22,7 +24,7 @@ import './App.css';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
-  if (loading) return <div className="loading-page"><div className="spinner" /><span className="logo">Vibe<span style={{color:'#A78BFA'}}>Me</span></span></div>;
+  if (loading) return <div className="loading-page"><div className="spinner" /><span className="logo">Vibe<span style={{color:'var(--purple-light)'}}>Me</span></span></div>;
   return isAuthenticated ? children : <Navigate to="/login" />;
 }
 
@@ -109,6 +111,9 @@ function AppRoutes() {
 
       {/* Global incoming call overlay - visible on every page */}
       <IncomingCallOverlay />
+
+      {/* Global toast notifications */}
+      <NotificationToast />
     </>
   );
 }
@@ -126,11 +131,13 @@ function AuthenticatedApp() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AlertProvider>
-        <AuthProvider>
-          <AuthenticatedApp />
-        </AuthProvider>
-      </AlertProvider>
+      <ThemeProvider>
+        <AlertProvider>
+          <AuthProvider>
+            <AuthenticatedApp />
+          </AuthProvider>
+        </AlertProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

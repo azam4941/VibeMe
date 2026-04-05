@@ -6,40 +6,40 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Primary palette - Midnight Purple */
+  /* Purple Palette — Default (overridden by ThemeContext at runtime) */
   --purple: #7B2FFF;
   --purple-light: #A78BFA;
   --purple-pale: rgba(123, 47, 255, 0.12);
-  --purple-mid: #C4B5FD;
-  --purple-dark: #4C1D95;
+  --purple-mid: #8B5CF6;
+  --purple-dark: #5B21B6;
 
   /* Accent colors */
-  --pink: #9333EA;
-  --pink-pale: rgba(147, 51, 234, 0.12);
+  --pink: #C084FC;
+  --pink-pale: rgba(192, 132, 252, 0.12);
   --teal: #00E6A4;
   --teal-pale: rgba(0, 230, 164, 0.12);
-  --amber: #FFB324;
-  --amber-pale: rgba(255, 179, 36, 0.12);
-  --coral: #A855F7;
-  --coral-pale: rgba(168, 85, 247, 0.12);
+  --amber: #FFD700;
+  --amber-pale: rgba(255, 215, 0, 0.12);
+  --coral: #FF7F50;
+  --coral-pale: rgba(255, 127, 80, 0.12);
   --red: #FF3B5D;
   --green: #00E6A4;
 
-  /* Premium Deep Purple Surfaces */
-  --navy: #0D0A1A;
-  --navy2: #141024;
-  --navy3: #1E1635;
-  --navy4: #2D2250;
+  /* Deep Purple Surfaces */
+  --navy: #0D0620;
+  --navy2: #160E30;
+  --navy3: #221647;
+  --navy4: #3730A3;
 
-  /* Light surfaces / Glassmorphism */
-  --bg: #100D1F;
-  --card: rgba(20, 16, 36, 0.85);
-  --border: rgba(123, 47, 255, 0.15);
+  /* Glassmorphism */
+  --bg: #0A0418;
+  --card: rgba(22, 14, 48, 0.90);
+  --border: rgba(123, 47, 255, 0.2);
 
   /* Text - High contrast */
   --text1: #FFFFFF;
-  --text2: #D4D0E8;
-  --text3: #8B85A8;
+  --text2: #C4B5FD;
+  --text3: #7C6DAF;
 
   /* Fonts */
   --font-display: 'Syne', sans-serif;
@@ -57,16 +57,41 @@
   --shadow-md: 0 8px 32px rgba(123, 47, 255, 0.25);
   --shadow-lg: 0 16px 48px rgba(123, 47, 255, 0.35);
 
-  /* Gradients */
-  --bg-gradient: radial-gradient(circle at 50% -20%, #1E1040 0%, var(--navy) 80%);
-  --btn-gradient: linear-gradient(135deg, #7B2FFF 0%, #9333EA 100%);
+  /* Premium Gradients */
+  --bg-gradient: radial-gradient(circle at 50% -20%, #3730A3 0%, var(--navy) 90%);
+  --btn-gradient: linear-gradient(135deg, #7B2FFF 0%, #C084FC 100%);
   --card-blur: blur(16px);
+
+  /* Semantic Utility Colors */
+  --primary-400: #A78BFA;
+  --primary-500: #7B2FFF;
+  --accent-400: #8B5CF6;
+  --hot-400: #E040FB;
+  --danger-400: #FF3B5D;
+  --danger-500: #E24B4A;
+  --success-400: #00E6A4;
+  
+  --text-primary: #FFFFFF;
+  --text-secondary: #E2E8F0;
+  --text-muted: #94A3B8;
+  
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-medium: rgba(255, 255, 255, 0.1);
+  --border-accent: rgba(123, 47, 255, 0.3);
+
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
 
   /* Safe area */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* Smooth theme transitions when switching between midday/midnight */
+html {
+  transition: background-color 0.8s ease;
 }
 
 html, body {
@@ -85,10 +110,10 @@ body {
 
 #root {
   min-height: 100%;
-  max-width: 480px; /* Mobile-first constraint */
+  max-width: 440px; /* Slimmer mobile look */
   margin: 0 auto;
   background: var(--bg-gradient);
-  box-shadow: 0 0 100px rgba(123, 47, 255, 0.15);
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   position: relative;

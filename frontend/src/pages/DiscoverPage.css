@@ -228,19 +228,19 @@
 .vibe-coral .vibe-check { border-color: rgba(168,85,247,0.4); background: var(--navy2); }
 
 /* Selected states */
-.vibe-purple.vibe-selected { background: #6D28D9; color: #fff; border-color: #6D28D9; }
+.vibe-purple.vibe-selected { background: var(--purple); color: #fff; border-color: var(--purple); }
 .vibe-purple.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
 
-.vibe-pink.vibe-selected { background: #7C3AED; color: #fff; border-color: #7C3AED; }
+.vibe-pink.vibe-selected { background: #C2185B; color: #fff; border-color: #C2185B; }
 .vibe-pink.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
 
-.vibe-teal.vibe-selected { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+.vibe-teal.vibe-selected { background: #00897B; color: #fff; border-color: #00897B; }
 .vibe-teal.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
 
-.vibe-amber.vibe-selected { background: #BA7517; color: #fff; border-color: #BA7517; }
+.vibe-amber.vibe-selected { background: #F57C00; color: #fff; border-color: #F57C00; }
 .vibe-amber.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
 
-.vibe-coral.vibe-selected { background: #8B5CF6; color: #fff; border-color: #8B5CF6; }
+.vibe-coral.vibe-selected { background: #E64A19; color: #fff; border-color: #E64A19; }
 .vibe-coral.vibe-selected .vibe-check { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: #fff; }
 
 
