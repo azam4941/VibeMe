@@ -141,6 +141,13 @@ class ApiService {
     });
   }
 
+  updateFcmToken(token) {
+    return this.request('/users/me/fcm-token', {
+      method: 'PUT',
+      body: JSON.stringify({ token }),
+    });
+  }
+
   getUserById(id) {
     return this.request(`/users/${id}`);
   }

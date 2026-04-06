@@ -96,7 +96,10 @@ const ProfilePage = () => {
       <div className="mp-hero dark-header">
         <div className="mp-top-row">
           <h2 className="mp-title">My Profile</h2>
-          <span className="mp-edit" onClick={() => navigate('/setup')}>Edit</span>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <span className="mp-edit" onClick={() => navigate(`/user/${user._id}`)} style={{ color: 'var(--teal)' }}>Preview</span>
+            <span className="mp-edit" onClick={() => navigate('/setup')}>Edit</span>
+          </div>
         </div>
 
         {isPaused && (

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAuth } from './AuthContext';
 import socketService from '../services/socket';
 import api from '../services/api';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 
 const NotificationContext = createContext();
 
@@ -149,8 +151,54 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     if (isAuthenticated) {
       requestNotificationPermission();
+
+      // Native Push Notifications (Capacitor)
+      if (Capacitor.isNativePlatform()) {
+        const initPush = async () => {
+          let permStatus = await PushNotifications.checkPermissions();
+          
+          if (permStatus.receive === 'prompt') {
+            permStatus = await PushNotifications.requestPermissions();
+          }
+
+          if (permStatus.receive !== 'granted') {
+            console.warn('⚠️ Push notification permission denied');
+            return;
+          }
+
+          await PushNotifications.register();
+
+          // On registration, save the token to DB
+          PushNotifications.addListener('registration', (token) => {
+            console.log('📲 FCM Token:', token.value);
+            api.updateFcmToken(token.value).catch(err => {
+              console.error('Failed to update FCM token on backend:', err);
+            });
+          });
+
+          PushNotifications.addListener('registrationError', (error) => {
+            console.error('❌ Push registration error:', JSON.stringify(error));
+          });
+
+          // Handle notifications received while app is OPEN
+          PushNotifications.addListener('pushNotificationReceived', (notification) => {
+            console.log('🔔 Push received (app open):', notification);
+            // We already have socket listeners for in-app toasts, 
+            // so we don't necessarily need to add another toast here 
+            // to avoid duplicates, but we could if we wanted.
+          });
+
+          // Handle notification click (opens app)
+          PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+            console.log('🖱️ Push action performed:', notification);
+            // Navigate based on notification data if needed
+          });
+        };
+
+        initPush();
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?._id]);
 
   const addToast = useCallback((message, type = 'info', icon = null, title = null) => {
     const id = ++toastIdCounter;

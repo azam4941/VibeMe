@@ -119,6 +119,21 @@ const UserDetailPage = () => {
         <div className="hero-gradient" />
         
         <div className="hero-content container">
+          {isSelf && (
+            <div style={{ 
+              background: 'rgba(123,47,255,0.2)', 
+              color: 'var(--purple-light)', 
+              padding: '8px 16px', 
+              textAlign: 'center', 
+              borderRadius: '12px', 
+              marginBottom: '24px',
+              border: '1px solid rgba(123,47,255,0.4)',
+              fontWeight: 500
+            }}>
+              <Info size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
+              You are previewing your public profile
+            </div>
+          )}
           <motion.div 
             className="hero-avatar-wrapper"
             initial={{ scale: 0.8, opacity: 0 }}

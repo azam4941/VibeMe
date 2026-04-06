@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import {
   Bell, MapPin, Check, X, ChevronDown, ChevronUp,
   Search, SlidersHorizontal, Star, Clock, TrendingUp,
-  MessageSquare, User as UserIcon, Video,
+  MessageSquare, User as UserIcon, Video, Layers, List
 } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
+import SwipeCard from '../components/SwipeCard';
 import api from '../services/api';
 import './DiscoverPage.css';
 
@@ -49,6 +51,7 @@ const DiscoverPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('rating');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'swipe'
   const debounceRef = useRef(null);
 
   const fetchUsers = useCallback(async (vibes, currentMode, search, sort) => {
@@ -145,6 +148,18 @@ const DiscoverPage = () => {
     }
   };
 
+  const handleSwipeRight = (userSwiped) => {
+    // Remove from local array
+    setUsers(users.filter(u => u._id !== userSwiped._id));
+    // Trigger chat
+    handleChatNow(userSwiped);
+  };
+
+  const handleSwipeLeft = (userSwiped) => {
+    // Just remove from local array
+    setUsers(users.filter(u => u._id !== userSwiped._id));
+  };
+
   const selectedCount = selectedVibes.length;
   const activeSortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label || 'Top Rated';
 
@@ -200,6 +215,28 @@ const DiscoverPage = () => {
           <div className="hs-card"><div className="hs-num text-teal">{stats.minPrice > 0 ? `₹${stats.minPrice}–₹${stats.maxPrice}` : '—'}</div><div className="hs-label">Price Range</div></div>
           <div className="hs-card"><div className="hs-num text-amber">{stats.avgRating}★</div><div className="hs-label">Avg Rating</div></div>
         </div>
+
+        {/* View Toggle */}
+        {mode === 'find' && (
+          <div className="view-toggle-container mb-16" style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
+            <div className="view-toggle glass" style={{ display: 'inline-flex', background: 'rgba(255,255,255,0.05)', borderRadius: '24px', padding: '4px' }}>
+              <button 
+                className={`btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ borderRadius: '20px' }}
+                onClick={() => setViewMode('list')}
+              >
+                <List size={14} /> List
+              </button>
+              <button 
+                className={`btn btn-sm ${viewMode === 'swipe' ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ borderRadius: '20px' }}
+                onClick={() => setViewMode('swipe')}
+              >
+                <Layers size={14} /> Swipe
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Sort Control */}
         <div className="discover-sort-row">
@@ -277,6 +314,27 @@ const DiscoverPage = () => {
             <p>{searchQuery ? `No results for "${searchQuery}"` : 'No vibes found in this category'}</p>
             {searchQuery && (
               <button className="btn btn-sm btn-secondary" onClick={() => { setSearchQuery(''); fetchUsers(selectedVibes, mode, '', sortBy); }}>Clear Search</button>
+            )}
+          </div>
+        ) : viewMode === 'swipe' && mode === 'find' ? (
+          <div className="swipe-deck-container">
+            <AnimatePresence>
+              {users.map((u, i) => (
+                <SwipeCard
+                  key={u._id}
+                  user={u}
+                  index={i}
+                  totalCards={users.length}
+                  onSwipeLeft={handleSwipeLeft}
+                  onSwipeRight={handleSwipeRight}
+                  onClick={() => navigate(`/user/${u._id}`)}
+                />
+              ))}
+            </AnimatePresence>
+            {users.length === 0 && (
+              <div className="discover-empty">
+                <p>You've seen everyone! Check back later.</p>
+              </div>
             )}
           </div>
         ) : (

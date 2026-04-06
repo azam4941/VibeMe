@@ -72,6 +72,16 @@ export class AuthService {
       if (!user) {
         user = await this.usersService.create({ phoneNumber, name: 'New User' });
         isNewUser = true;
+      } else if (user.accountStatus === 'deleted' || user.accountStatus === 'paused') {
+        const wasDeleted = user.accountStatus === 'deleted';
+        user = await this.usersService.update(user._id.toString(), {
+          accountStatus: 'active',
+          deletedAt: null,
+          pausedAt: null
+        } as any);
+        if (wasDeleted) {
+          isNewUser = true;
+        }
       }
 
       if (user.isBlocked) {
@@ -208,6 +218,16 @@ export class AuthService {
     if (!user) {
       user = await this.usersService.create({ phoneNumber, name: 'New User' });
       isNewUser = true;
+    } else if (user.accountStatus === 'deleted' || user.accountStatus === 'paused') {
+      const wasDeleted = user.accountStatus === 'deleted';
+      user = await this.usersService.update(user._id.toString(), {
+        accountStatus: 'active',
+        deletedAt: null,
+        pausedAt: null
+      } as any);
+      if (wasDeleted) {
+        isNewUser = true;
+      }
     }
 
     // Check if blocked

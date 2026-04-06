@@ -341,4 +341,8 @@ export class UsersService {
     await user.save();
     return { message: 'Account deleted successfully' };
   }
+
+  async updateFcmToken(userId: string, token: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, { fcmToken: token });
+  }
 }

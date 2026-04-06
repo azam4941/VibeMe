@@ -3,11 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Model, Types } from 'mongoose';
 import { Notification, NotificationDocument } from './notification.schema';
+import { User, UserDocument } from '../users/user.schema';
+import * as admin from 'firebase-admin';
 
 @Injectable()
 export class NotificationService {
   constructor(
     @InjectModel(Notification.name) private notifModel: Model<NotificationDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private eventEmitter: EventEmitter2,
   ) {}
 
@@ -27,6 +30,35 @@ export class NotificationService {
       isRead: false,
     });
     this.eventEmitter.emit('notification.created', notif);
+
+    // Send FCM Push Notification if token exists
+    try {
+      const user = await this.userModel.findById(userId).select('fcmToken').exec();
+      if (user && user.fcmToken) {
+        const message = {
+          notification: { title, body },
+          data: {
+            ...data,
+            type,
+            click_action: 'FLUTTER_NOTIFICATION_CLICK', // Standard for background handling
+          },
+          token: user.fcmToken,
+          android: {
+            priority: 'high' as const,
+            notification: {
+              sound: 'default',
+              channelId: 'default',
+            },
+          },
+        };
+
+        await admin.messaging().send(message);
+        console.log(`🚀 FCM Push sent to user ${userId}`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to send FCM push:', error.message);
+    }
+
     return notif;
   }
 

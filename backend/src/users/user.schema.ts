@@ -156,6 +156,9 @@ export class User {
 
   @Prop({ type: Date })
   lastActiveAt: Date;
+
+  @Prop({ default: '' })
+  fcmToken: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

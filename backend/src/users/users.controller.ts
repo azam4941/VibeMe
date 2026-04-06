@@ -105,6 +105,13 @@ export class UsersController {
     return this.usersService.deleteAccount(req.user.userId);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Put('me/fcm-token')
+  async updateFcmToken(@Req() req, @Body() dto: { token: string }) {
+    await this.usersService.updateFcmToken(req.user.userId, dto.token);
+    return { success: true };
+  }
+
   // ───── Public profile — photo visibility depends on viewer verification ─────
 
   @UseGuards(JwtAuthGuard)
