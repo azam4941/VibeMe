@@ -24,6 +24,15 @@ allprojects {
     }
 }
 
+subprojects {
+    // Force Java 17 across all modules (including Capacitor plugins)
+    // to avoid "invalid source release: 21" on machines without JDK 21.
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = '17'
+        targetCompatibility = '17'
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
