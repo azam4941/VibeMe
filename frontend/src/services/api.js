@@ -1,20 +1,27 @@
 // API URL is set at build time via VITE_API_URL environment variable.
-// Build with: npm run build:phone  (uses .env.phone with your LAN IP)
+// If not provided, we fall back to production backend so APKs keep working.
 const getApiBase = () => {
+  const prodDefault = 'https://vibeme-backend.onrender.com/api';
+
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // Capacitor/Android build: if not configured at build time, fail fast with a clear error.
-  // This prevents shipping an APK that silently points to localhost.
-  if (window?.Capacitor) {
-    throw new Error('App misconfigured: VITE_API_URL is not set for this build.');
+
+  // Optional runtime override (useful for local backend testing on phone).
+  const runtimeApi = localStorage.getItem('ct_api_base');
+  if (runtimeApi) {
+    return runtimeApi;
   }
+
+  // Capacitor/Android build: default to deployed backend.
+  if (window?.Capacitor) return prodDefault;
+
   const hostname = window.location.hostname;
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return `http://${hostname}:3001/api`;
   }
   // Production default (Render): when env isn't injected, use the deployed backend.
-  return 'https://vibeme-backend.onrender.com/api';
+  return prodDefault;
 };
 
 // Expose the server origin (without /api) for socket.js
@@ -58,10 +65,15 @@ class ApiService {
       ...options.headers,
     };
 
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    let res;
+    try {
+      res = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers,
+      });
+    } catch (error) {
+      throw new Error(`Network error: cannot reach server (${API_BASE}). Check internet/backend deployment.`);
+    }
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: 'Request failed' }));
