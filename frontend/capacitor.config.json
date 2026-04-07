@@ -2,8 +2,5 @@
   "appId": "com.azam.rentme",
   "appName": "VibeMe",
   "webDir": "dist",
-  "server": {
-    "androidScheme": "http",
-    "cleartext": true
-  }
+  "server": {}
 }

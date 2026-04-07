@@ -4,11 +4,17 @@ const getApiBase = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
+  // Capacitor/Android build: if not configured at build time, fail fast with a clear error.
+  // This prevents shipping an APK that silently points to localhost.
+  if (window?.Capacitor) {
+    throw new Error('App misconfigured: VITE_API_URL is not set for this build.');
+  }
   const hostname = window.location.hostname;
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return `http://${hostname}:3001/api`;
   }
-  return 'http://localhost:3001/api';
+  // Production default (Render): when env isn't injected, use the deployed backend.
+  return 'https://vibeme-backend.onrender.com/api';
 };
 
 // Expose the server origin (without /api) for socket.js
